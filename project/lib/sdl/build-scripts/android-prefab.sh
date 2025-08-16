@@ -36,7 +36,7 @@ sdl_root=$(cd -P -- "$(dirname -- "$0")/.." && printf '%s\n' "$(pwd -P)")
 build_root="${sdl_root}/build-android-prefab"
 
 android_abis="armeabi-v7a arm64-v8a x86 x86_64"
-android_api=19
+android_api=21
 android_ndk=21
 android_stl="c++_shared"
 
@@ -159,8 +159,8 @@ create_aar_androidmanifest() {
     xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.libsdl.android" android:versionCode="1"
     android:versionName="1.0">
-	<uses-sdk android:minSdkVersion="16"
-              android:targetSdkVersion="29"/>
+	<uses-sdk android:minSdkVersion="21"
+              android:targetSdkVersion="34"/>
 </manifest>
 EOF
 }
