@@ -174,6 +174,11 @@ class AIRWindow extends FlashWindow
 		parent.stage.addEventListener(StageOrientationEvent.ORIENTATION_CHANGE, handleStageOrientationChangeEvent);
 	}
 
+	public function setVSyncMode(mode:WindowVSyncMode):Bool
+	{
+		return false;
+	}
+
 	public override function focus():Void
 	{
 		if (nativeWindow != null && nativeWindow.visible)

@@ -37,7 +37,7 @@ static const uchar *TSTR[] = {
 	USTR("void"), USTR("i8"), USTR("i16"), USTR("i32"), USTR("i64"), USTR("f32"), USTR("f64"),
 	USTR("bool"), USTR("bytes"), USTR("dynamic"), NULL, NULL,
 	USTR("array"), USTR("type"), NULL, NULL, USTR("dynobj"),
-	NULL, NULL, NULL, NULL, NULL
+	NULL, NULL, NULL, NULL, NULL, NULL, USTR("guid")
 };
 
 static int T_SIZES[] = {
@@ -63,6 +63,8 @@ static int T_SIZES[] = {
 	HL_WSIZE, // NULL
 	HL_WSIZE, // METHOD
 	HL_WSIZE, // STRUCT
+	0, // PACKED
+	8, // GUID
 };
 
 HL_PRIM int hl_type_size( hl_type *t ) {
@@ -85,6 +87,7 @@ HL_PRIM int hl_pad_struct( int size, hl_type *t ) {
 		GET_ALIGN(unsigned int);
 		break;
 	case HI64:
+	case HGUID:
 		GET_ALIGN(int64);
 		break;
 	case HF32:
@@ -121,9 +124,11 @@ HL_PRIM bool hl_same_type( hl_type *a, hl_type *b ) {
 	case HDYN:
 	case HARRAY:
 	case HDYNOBJ:
+	case HGUID:
 		return true;
 	case HREF:
 	case HNULL:
+	case HPACKED:
 		return hl_same_type(a->tparam, b->tparam);
 	case HFUN:
 	case HMETHOD:
@@ -175,6 +180,8 @@ HL_PRIM bool hl_is_dynamic( hl_type *t ) {
 		true, // HNULL
 		false, // HMETHOD
 		false, // HSTRUCT
+		false, // HPACKED
+		false, // HGUID
 	};
 	return T_IS_DYNAMIC[t->kind];
 }
@@ -226,6 +233,8 @@ HL_PRIM bool hl_safe_cast( hl_type *t, hl_type *to ) {
 			return true;
 		}
 		break;
+	case HPACKED:
+		return hl_safe_cast(t->tparam, to);
 	default:
 		break;
 	}
@@ -304,6 +313,11 @@ static void hl_type_str_rec( hl_buffer *b, hl_type *t, tlist *parents ) {
 		break;
 	case HNULL:
 		hl_buffer_str(b,USTR("null<"));
+		hl_type_str_rec(b,t->tparam,l);
+		hl_buffer_char(b,'>');
+		break;
+	case HPACKED:
+		hl_buffer_str(b, USTR("packed<"));
 		hl_type_str_rec(b,t->tparam,l);
 		hl_buffer_char(b,'>');
 		break;
@@ -564,6 +578,44 @@ HL_PRIM varray *hl_enum_parameters( venum *e ) {
 	return a;
 }
 
+static void *hl_guid_map = NULL;
+extern void *hl_hi64alloc();
+extern void hl_hi64set( void *map, int64 guid, vdynamic *name );
+extern vdynamic *hl_hi64get( void *map, int64 guid );
+extern void hl_hi64remove( void *map, int64 guid );
+
+HL_PRIM uchar *hl_guid_str( int64 guid, uchar buf[14] ) {
+	static char CHARS[] = "#&0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	int i;
+	int pos = 0;
+	vdynamic *data = hl_guid_map ? hl_hi64get(hl_guid_map,guid) : NULL;
+	uchar *name = data ? (uchar*)(data->v.bytes) : NULL;
+	if( name != NULL )
+		return name;
+	if( guid == 0 )
+		return USTR("0");
+	for(i=0;i<11;i++) {
+		if( i == 4 || i == 8 )
+			buf[pos++] = '-';
+		buf[pos++] = CHARS[(guid >> (60 - i*6))&63];
+	}
+	buf[pos++] = 0;
+	return buf;
+}
+
+HL_PRIM void hl_register_guid_name( int64 guid, vbyte *name ) {
+	if( hl_guid_map == NULL ) {
+		hl_guid_map = hl_hi64alloc();
+		hl_gc_threads_info()->guid_map = hl_guid_map;
+		hl_add_root(&hl_guid_map);
+	}
+	if( name )
+		hl_hi64set(hl_guid_map, guid, hl_make_dyn(&name, &hlt_bytes));
+	else
+		hl_hi64remove(hl_guid_map, guid);
+}
+
+
 DEFINE_PRIM(_BYTES, type_str, _TYPE);
 DEFINE_PRIM(_BYTES, type_name, _TYPE);
 DEFINE_PRIM(_I32, type_args_count, _TYPE);
@@ -576,7 +628,12 @@ DEFINE_PRIM(_BOOL, type_enum_eq, _DYN _DYN);
 DEFINE_PRIM(_DYN, alloc_enum_dyn, _TYPE _I32 _ARR _I32);
 DEFINE_PRIM(_ARR, enum_parameters, _DYN);
 DEFINE_PRIM(_BOOL, type_set_global, _TYPE _DYN);
+DEFINE_PRIM(_VOID, register_guid_name, _I64 _BYTES);
 
+typedef void hl_mlookup_map;
+extern hl_mlookup_map *hl_mlookup_alloc();
+extern int *hl_mlookup_find( hl_mlookup_map *m, void *key );
+extern void hl_mlookup_set_impl( hl_mlookup_map *m, void *key, int value );
 
 typedef struct {
 	char *buf;
@@ -585,10 +642,7 @@ typedef struct {
 	int *offsets;
 	int offsets_pos;
 	int offsets_size;
-	void **lookup;
-	int *lookup_index;
-	int lookup_pos;
-	int lookup_size;
+	hl_mlookup_map *lookup;
 	int *remap_target;
 	int remap_pos;
 	int remap_size;
@@ -631,50 +685,20 @@ static void compact_write_offset( mem_context *ctx, int position ) {
 	compact_write_ptr(ctx,(void*)(int_val)position);
 }
 
-static int compact_lookup_index( mem_context *ctx, void *addr ) {
-	int min = 0;
-	int max = ctx->lookup_pos;
-	while( min < max ) {
-		int mid = (min + max) >> 1;
-		void *a = ctx->lookup[mid];
-		if( a < addr ) min = mid + 1; else if( a > addr ) max = mid; else return mid;
-	}
-	return -1;
-}
-
 #define BYTE_MARK 0x40000000
 
 static int compact_lookup_ref( mem_context *ctx, void *addr, bool is_bytes ) {
-	int min = 0;
-	int max = ctx->lookup_pos;
-	while( min < max ) {
-		int mid = (min + max) >> 1;
-		void *a = ctx->lookup[mid];
-		if( a < addr ) min = mid + 1; else if( a > addr ) max = mid; else return ctx->remap_target[ctx->lookup_index[mid]&~BYTE_MARK];
-	}
-	if( ctx->lookup_pos == ctx->lookup_size ) {
-		int nsize = ctx->lookup_size == 0 ? 128 : (ctx->lookup_size * 3) / 2;
-		void **nlookup = (void**)malloc(nsize * sizeof(void*));
-		int *nindex = (int*)malloc(nsize * sizeof(int));
-		memcpy(nlookup,ctx->lookup,ctx->lookup_pos * sizeof(void*));
-		memcpy(nindex,ctx->lookup_index,ctx->lookup_pos * sizeof(int));
-		free(ctx->lookup);
-		free(ctx->lookup_index);
-		ctx->lookup = nlookup;
-		ctx->lookup_index = nindex;
-		ctx->lookup_size = nsize;
-	}
-	int pos = (min + max) >> 1;
-	memmove(ctx->lookup + pos + 1, ctx->lookup + pos, (ctx->lookup_pos - pos) * sizeof(void*));
-	memmove(ctx->lookup_index + pos + 1, ctx->lookup_index + pos, (ctx->lookup_pos - pos) * sizeof(int));
-	int id = ctx->lookup_pos++;
-	ctx->lookup[pos] = addr;
-	ctx->lookup_index[pos] = id | (is_bytes ? BYTE_MARK : 0);
+	int *v = hl_mlookup_find(ctx->lookup, addr);
+	if( v )
+		return ctx->remap_target[(*v)&~BYTE_MARK];
+	int id = ctx->remap_pos;
+	hl_mlookup_set_impl(ctx->lookup, addr, id | (is_bytes ? BYTE_MARK : 0));
 	compact_grow(todos,todos_pos,todos_size,1,void*);
 	ctx->todos[ctx->todos_pos++] = addr;
 	compact_grow(remap_target,remap_pos,remap_size,1,int);
 	int target = -id-1;
-	ctx->remap_target[ctx->remap_pos++] = target;
+	ctx->remap_target[id] = target;
+	ctx->remap_pos++;
 	return target;
 }
 
@@ -845,7 +869,7 @@ static void compact_write_content( mem_context *ctx, vdynamic *d ) {
 			for(i=0;i<obj->nvalues;i++) {
 				int j;
 				for(j=0;i<obj->nfields;j++) {
-					if( obj->lookup[j].field_index == i && hl_is_ptr(obj->lookup[j].t) ) {
+					if( (obj->lookup[j].field_index&HL_DYNOBJ_INDEX_MASK) == i && hl_is_ptr(obj->lookup[j].t) ) {
 						compact_write_data(ctx, obj->lookup[j].t, obj->values + i);
 						break;
 					}
@@ -855,9 +879,9 @@ static void compact_write_content( mem_context *ctx, vdynamic *d ) {
 		int save_pos = ctx->todos_pos;
 		for(i=0;i<obj->nfields;i++) {
 			hl_field_lookup *f = obj->lookup + i;
-			int idx = compact_lookup_ref(ctx, hl_is_ptr(f->t) ? (char*)(obj->values + f->field_index) : (char*)(obj->raw_data + f->field_index), false);
+			int idx = compact_lookup_ref(ctx, hl_is_ptr(f->t) ? (char*)(obj->values + (f->field_index&HL_DYNOBJ_INDEX_MASK)) : (char*)(obj->raw_data + (f->field_index&HL_DYNOBJ_INDEX_MASK)), false);
 			idx = -idx-1;
-			ctx->remap_target[idx] = hl_is_ptr(f->t) ? values_data + sizeof(void*)*f->field_index : raw_data + f->field_index;
+			ctx->remap_target[idx] = hl_is_ptr(f->t) ? values_data + sizeof(void*)*(f->field_index&HL_DYNOBJ_INDEX_MASK) : raw_data + (f->field_index&HL_DYNOBJ_INDEX_MASK);
 		}
 		ctx->todos_pos = save_pos;
 		break;
@@ -898,6 +922,7 @@ HL_PRIM vdynamic *hl_mem_compact( vdynamic *d, varray *exclude, int flags, int *
 	int i;
 	int object_count = 0;
 	memset(ctx,0,sizeof(mem_context));
+	ctx->lookup = hl_mlookup_alloc();
 	ctx->flags = flags;
 	compact_lookup_ref(ctx,d,false);
 	if( exclude ) {
@@ -909,8 +934,7 @@ HL_PRIM vdynamic *hl_mem_compact( vdynamic *d, varray *exclude, int flags, int *
 	}
 	while( ctx->todos_pos > 0 ) {
 		void *addr = ctx->todos[--ctx->todos_pos];
-		int pos = compact_lookup_index(ctx, addr);
-		int index = ctx->lookup_index[pos];
+		int index = *hl_mlookup_find(ctx->lookup, addr);
 		compact_pad(ctx, &hlt_dyn);
 		ctx->remap_target[index&~BYTE_MARK] = ctx->buf_pos;
 		if( index & BYTE_MARK ) {
@@ -922,7 +946,7 @@ HL_PRIM vdynamic *hl_mem_compact( vdynamic *d, varray *exclude, int flags, int *
 		object_count++;
 	}
 	vbyte *data = NULL;
-#	ifdef HL_WIN
+#	if defined(HL_WIN) && !defined(HL_XBO)
 	if( flags & 1 )
 		data = (vbyte*)VirtualAlloc(NULL,ctx->buf_pos,MEM_COMMIT|MEM_RESERVE,PAGE_READWRITE);
 #	endif
@@ -945,11 +969,9 @@ HL_PRIM vdynamic *hl_mem_compact( vdynamic *d, varray *exclude, int flags, int *
 	}
 	free(ctx->buf);
 	free(ctx->offsets);
-	free(ctx->lookup);
-	free(ctx->lookup_index);
 	free(ctx->remap_target);
 	free(ctx->todos);
-#	ifdef HL_WIN
+#	if defined(HL_WIN) && !defined(HL_XBO)
 	if( flags & 1 ) {
 		DWORD old = 0;
 		VirtualProtect(data,ctx->buf_pos,PAGE_READONLY,&old);

@@ -61,7 +61,9 @@ static void process_finalize( vprocess *p ) {
 #	ifdef HL_WIN
 	CloseHandle(p->eread);
 	CloseHandle(p->oread);
-	CloseHandle(p->iwrite);
+	if (p->iwrite != NULL) {
+		CloseHandle(p->iwrite);
+	}
 	CloseHandle(p->pinf.hProcess);
 	CloseHandle(p->pinf.hThread);
 #	else
@@ -187,7 +189,10 @@ HL_PRIM int hl_process_stdout_read( vprocess *p, vbyte *str, int pos, int len ) 
 		return -1;
 	return nbytes;
 #	else
-	int nbytes = read(p->oread,str+pos,len);
+	int nbytes;
+	do {
+		nbytes = read(p->oread,str+pos,len);
+	} while (nbytes == -1 && errno == EINTR);
 	if( nbytes <= 0 )
 		return -1;
 	return nbytes;
@@ -201,7 +206,10 @@ HL_PRIM int hl_process_stderr_read( vprocess *p, vbyte *str, int pos, int len ) 
 		return -1;
 	return nbytes;
 #	else
-	int nbytes = read(p->eread,str+pos,len);
+	int nbytes;
+	do {
+		nbytes = read(p->eread,str+pos,len);
+	} while (nbytes == -1 && errno == EINTR);
 	if( nbytes <= 0 )
 		return -1;
 	return nbytes;
@@ -215,7 +223,10 @@ HL_PRIM int hl_process_stdin_write( vprocess *p, vbyte *str, int pos, int len ) 
 		return -1;
 	return nbytes;
 #	else
-	int nbytes = write(p->iwrite,str+pos,len);
+	int nbytes;
+	do {
+		nbytes = write(p->iwrite,str+pos,len);
+	} while (nbytes == -1 && errno == EINTR);
 	if( nbytes < 0 )
 		return -1;
 	return nbytes;
@@ -226,6 +237,7 @@ HL_PRIM bool hl_process_stdin_close( vprocess *p ) {
 #	ifdef HL_WIN
 	if( !CloseHandle(p->iwrite) )
 		return false;
+	p->iwrite = NULL;
 #	else
 	if( close(p->iwrite) )
 		return false;

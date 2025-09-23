@@ -22,6 +22,7 @@ import lime.system.JNI;
 import lime.system.System;
 import lime.ui.MouseCursor;
 import lime.ui.Window;
+import lime.ui.WindowVSyncMode;
 import lime.utils.UInt8Array;
 
 #if !lime_debug
@@ -323,6 +324,18 @@ class NativeWindow
 		{
 			#if (!macro && lime_cffi)
 			return NativeCFFI.lime_window_get_text_input_enabled(handle);
+			#end
+		}
+
+		return false;
+	}
+
+	public function setVSyncMode(mode:WindowVSyncMode):Bool
+	{
+		if (handle != null)
+		{
+			#if (!macro && lime_cffi)
+			return NativeCFFI.lime_window_set_vsync_mode(handle, mode);
 			#end
 		}
 

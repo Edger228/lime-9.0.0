@@ -4,7 +4,7 @@ typedef WinPtr = hl.Abstract<"sdl_window">;
 private typedef GLContext = hl.Abstract<"sdl_gl">;
 typedef DisplayHandle = Null<Int>;
 
-@:enum abstract DisplayMode(Int) {
+enum abstract DisplayMode(Int) {
 	var Windowed = 0;
 	var Fullscreen = 1;
 	var Borderless = 2;
@@ -45,10 +45,12 @@ class Window {
 	public static inline var SDL_WINDOW_TOOLTIP            = 0x00040000;
 	public static inline var SDL_WINDOW_POPUP_MENU         = 0x00080000;
 	public static inline var SDL_WINDOW_VULKAN             = 0x10000000;
+	public static inline var SDL_WINDOW_METAL              = 0x20000000;
 
 	var win : WinPtr;
 	var glctx : GLContext;
 	var lastFrame : Float;
+	public var id(get,never) : Int;
 	public var title(default, set) : String;
 	public var vsync(default, set) : Bool;
 	public var width(get, never) : Int;
@@ -64,6 +66,7 @@ class Window {
 	public var currentMonitor(get, default) : Int;
 	public var visible(default, set) : Bool = true;
 	public var opacity(get, set) : Float;
+	public var grab(get, set) : Bool;
 
 	public function new( title : String, width : Int, height : Int, x : Int = SDL_WINDOWPOS_CENTERED, y : Int = SDL_WINDOWPOS_CENTERED, sdlFlags : Int = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE ) {
 		while( true ) {
@@ -177,6 +180,10 @@ class Window {
 		setPosition(SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 	}
 
+	public function warpMouse( x : Int, y : Int ) {
+		warpMouseInWindow(win, x, y);
+	}
+
 	function get_width() {
 		var w = 0;
 		winGetSize(win, w, null);
@@ -230,6 +237,7 @@ class Window {
 	}
 
 	function set_vsync(v) {
+		if( vsync == v ) return v;
 		setVsync(v);
 		return vsync = v;
 	}
@@ -241,6 +249,19 @@ class Window {
 	function set_opacity(v) {
 		winSetOpacity(win, v);
 		return v;
+	}
+	
+	function get_grab() {
+		return getWindowGrab(win);
+	}
+	
+	function set_grab(v) {
+		setWindowGrab(win, v);
+		return v;
+	}
+	
+	function get_id() {
+		return winGetId(win);
 	}
 
 	/**
@@ -318,6 +339,11 @@ class Window {
 		return 0;
 	}
 
+	@:hlNative("?sdl", "win_get_id")
+	static function winGetId( win : WinPtr ) : Int {
+		return 0;
+	}
+
 	static function winSetSize( win : WinPtr, width : Int, height : Int ) {
 	}
 
@@ -355,4 +381,15 @@ class Window {
 
 	static function setVsync( b : Bool ) {
 	}
+
+	static function setWindowGrab( win : WinPtr, grab : Bool ) {
+	}
+	
+	static function getWindowGrab( win : WinPtr ) : Bool {
+		return false;
+	}
+	
+	static function warpMouseInWindow( win : WinPtr, x : Int, y : Int ) : Void {
+	}
+
 }

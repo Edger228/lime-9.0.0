@@ -488,6 +488,11 @@ class Window
 		__backend.setIcon(image);
 	}
 
+	public function setVSyncMode(mode:WindowVSyncMode):Bool
+	{
+		return __backend.setVSyncMode(mode);
+	}
+
 	public function toString():String
 	{
 		return "[object Window]";

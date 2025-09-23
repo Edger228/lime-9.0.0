@@ -33,17 +33,39 @@
 #	include <windows.h>
 #	include <io.h>
 #	include <fcntl.h>
-#else
+#elif defined(HL_XBO)
 #	include<xdk.h>
 #endif
 #	define fopen(name,mode) _wfopen(name,mode)
 #	define HL_UFOPEN
+#else
+#include <errno.h>
 #endif
 
 #ifdef HL_WIN_DESKTOP
 #	define SET_IS_STD(f,b) (f)->is_std = b
 #else
 #	define SET_IS_STD(f,b)
+#endif
+
+#ifndef HL_WIN
+// retry if we were interrupted by a signal (profiler triggered for example)
+static size_t fread_retry( void *buffer, size_t size, size_t count, FILE *f ) {
+	size_t ret;
+	do {
+		ret = fread(buffer,size,count,f);
+	} while( ret == 0 && ferror(f) && errno == EINTR );
+	return ret;
+}
+static size_t fwrite_retry( void *buffer, size_t size, size_t count, FILE *f ) {
+	size_t ret;
+	do {
+		ret = fwrite(buffer,size,count,f);
+	} while( ret == 0 && ferror(f) && errno == EINTR );
+	return ret;
+}
+#define fread fread_retry
+#define fwrite fwrite_retry
 #endif
 
 typedef struct _hl_fdesc hl_fdesc;
@@ -190,6 +212,10 @@ HL_PRIM bool hl_file_eof( hl_fdesc *f ) {
 	return (bool)feof(f->f);
 }
 
+HL_PRIM int hl_file_error_code() {
+	return errno;
+}
+
 HL_PRIM bool hl_file_flush( hl_fdesc *f ) {
 	int ret;
 	if( !f ) return false;
@@ -266,4 +292,5 @@ DEFINE_PRIM(_FILE, file_stdout, _NO_ARG);
 DEFINE_PRIM(_FILE, file_stderr, _NO_ARG);
 DEFINE_PRIM(_BYTES, file_contents, _BYTES _REF(_I32));
 DEFINE_PRIM(_BOOL, file_is_locked, _BYTES);
+DEFINE_PRIM(_I32, file_error_code, _NO_ARG);
 

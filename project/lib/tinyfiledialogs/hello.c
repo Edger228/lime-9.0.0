@@ -1,7 +1,15 @@
-/*_________
- /         \ hello.c v3.8.8 [Apr 22, 2021] zlib licence
+/* SPDX-License-Identifier: Zlib
+Copyright (c) 2014 - 2024 Guillaume Vareille http://ysengrin.com
+	 ________________________________________________________________
+	|                                                                |
+	| 100% compatible C C++  ->  You can rename this .c file as .cpp |
+	|________________________________________________________________|
+
+********* TINY FILE DIALOGS OFFICIAL WEBSITE IS ON SOURCEFORGE *********
+  _________
+ /         \ hello.c v3.19.2 [Jul 24, 2025]
  |tiny file| Hello World file created [November 9, 2014]
- | dialogs | Copyright (c) 2014 - 2021 Guillaume Vareille http://ysengrin.com
+ | dialogs |
  \____  ___/ http://tinyfiledialogs.sourceforge.net
       \|     git clone http://git.code.sf.net/p/tinyfiledialogs/code tinyfd
               ____________________________________________
@@ -18,6 +26,11 @@
  |             - if you want MBCS set tinyfd_winUtf8 to 0  |
  |             - functions like fopen expect MBCS          |
  |_________________________________________________________|
+  ___________________________________________________________
+ |                                                           |
+ | v3.10: NEW FORTRAN module fully implemented with examples |
+ |            https://stackoverflow.com/a/59657117          |
+ |___________________________________________________________|
 
 If you like tinyfiledialogs, please upvote my stackoverflow answer
 https://stackoverflow.com/a/47651444
@@ -46,13 +59,20 @@ misrepresented as being the original software.
     if a console is missing, it will use graphic dialogs
     if a graphical display is absent, it will use console dialogs
 		(on windows the input box may take some time to open the first time)
-*/
 
+  See compilation instructions at the end of this file
+
+     __________________________________________
+    |  ______________________________________  |
+    | |                                      | |
+    | | DO NOT USE USER INPUT IN THE DIALOGS | |
+    | |______________________________________| |
+    |__________________________________________|
+*/
 
 #include <stdio.h>
 #include <string.h>
 #include "tinyfiledialogs.h"
-
 
 #ifdef _MSC_VER
 #pragma warning(disable:4996) /* silences warnings about strcpy strcat fopen*/
@@ -61,12 +81,12 @@ misrepresented as being the original software.
 int main( int argc , char * argv[] )
 {
 	int lIntValue;
-	char const * lPassword;
-	char const * lTheSaveFileName;
-	char const * lTheOpenFileName;
-	char const * lTheSelectFolderName;
-	char const * lTheHexColor;
-	char const * lWillBeGraphicMode;
+	char * lPassword;
+	char * lTheSaveFileName;
+	char * lTheOpenFileName;
+	char * lTheSelectFolderName;
+	char * lTheHexColor;
+	char * lWillBeGraphicMode;
 	unsigned char lRgbColor[3];
 	FILE * lIn;
 	char lBuffer[1024];
@@ -78,7 +98,7 @@ int main( int argc , char * argv[] )
 	tinyfd_silent = 1;  /* default is 1 */
 
 	tinyfd_forceConsole = 0; /* default is 0 */
-	tinyfd_assumeGraphicDisplay = 0; /* default is 0 */
+	/* tinyfd_assumeGraphicDisplay = 0; */ /* default is 0 */
 
 #ifdef _WIN32
 	 tinyfd_winUtf8 = 1; /* default is 1 */
@@ -88,7 +108,7 @@ int main( int argc , char * argv[] )
    and pass them passed to _wfopen() instead of fopen() */
 #endif
 
-	/*tinyfd_beep();*/
+	tinyfd_beep();
 
 	lWillBeGraphicMode = tinyfd_inputBox("tinyfd_query", NULL, NULL);
 
@@ -110,16 +130,18 @@ int main( int argc , char * argv[] )
 	if ( lWillBeGraphicMode && ! tinyfd_forceConsole )
 	{
 #if 0
-			lIntValue = tinyfd_messageBox("Hello World", "\
+		lIntValue = tinyfd_messageBox("Hello World", "\
 graphic dialogs [Yes]\n\
 console mode [No]\n\
 quit [Cancel]",
-				"yesnocancel", "question", 1);
-			if (!lIntValue) return 1;
-			tinyfd_forceConsole = (lIntValue == 2);
+			"yesnocancel", "question", 1);
+		if (!lIntValue) return 1;
+		tinyfd_forceConsole = (lIntValue == 2);
 #else
-			lIntValue = tinyfd_messageBox("Hello World", "graphic dialogs [Yes] / console mode [No]", "yesno", "question", 1);
-			tinyfd_forceConsole = ! lIntValue;
+		lIntValue = tinyfd_messageBox(
+			"Hello World", "graphic dialogs [Yes] / console mode [No]",
+			"yesno", "question", 1);
+		tinyfd_forceConsole = ! lIntValue;
 #endif
 	}
 
@@ -132,7 +154,7 @@ quit [Cancel]",
 
 	lTheSaveFileName = tinyfd_saveFileDialog(
 		"let us save this password",
-		"passwordFile.txt",
+		"./passwordFile.txt",
 		2,
 		lFilterPatterns,
 		NULL);
@@ -170,11 +192,11 @@ quit [Cancel]",
 
 	lTheOpenFileName = tinyfd_openFileDialog(
 		"let us read the password back",
-		"",
+		"../",
 		2,
 		lFilterPatterns,
 		"text files",
-		0);
+		1);
 
 	if (! lTheOpenFileName)
 	{
@@ -212,7 +234,7 @@ quit [Cancel]",
 	tinyfd_messageBox("your password as it was saved", lBuffer, "ok", "info", 1);
 
 	lTheSelectFolderName = tinyfd_selectFolderDialog(
-		"let us just select a directory", NULL);
+		"let us just select a directory", "../../");
 
 	if (!lTheSelectFolderName)
 	{
@@ -247,8 +269,6 @@ quit [Cancel]",
 	tinyfd_messageBox("The selected hexcolor is", lTheHexColor, "ok", "info", 1);
 
 	tinyfd_messageBox("your read password was", lPassword, "ok", "info", 1);
-
-	tinyfd_beep();
 
 	return 0;
 }
