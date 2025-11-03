@@ -92,14 +92,14 @@ jobs:
           lime build SimpleAudio linux -release -verbose -nocolor
 
   macos:
-    runs-on: macos-13
+    runs-on: macos-14
     steps:
 
       - uses: actions/checkout@v4
         with:
           submodules: true
 
-      - uses: krdlab/setup-haxe@v1
+      - uses: krdlab/setup-haxe@8f35d1215b93e940a76f9470e22e8a5ba6149598
         with:
           haxe-version: ${{ env.HAXE_VERSION }}
 
@@ -349,14 +349,14 @@ jobs:
           lime create SimpleAudio -verbose -nocolor -eval
           lime build SimpleAudio android -release -verbose -nocolor -eval
   ios:
-    runs-on: macos-13
+    runs-on: macos-14
     steps:
 
       - uses: actions/checkout@v4
         with:
           submodules: true
 
-      - uses: krdlab/setup-haxe@v1
+      - uses: krdlab/setup-haxe@8f35d1215b93e940a76f9470e22e8a5ba6149598
         with:
           haxe-version: ${{ env.HAXE_VERSION }}
 
@@ -419,7 +419,7 @@ jobs:
         with:
           submodules: true
 
-      - uses: krdlab/setup-haxe@v1
+      - uses: krdlab/setup-haxe@8f35d1215b93e940a76f9470e22e8a5ba6149598
         with:
           haxe-version: ${{ env.HAXE_VERSION }}
 
@@ -652,11 +652,11 @@ jobs:
     needs: package-haxelib
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-24.04, macos-13]
+        os: [windows-latest, ubuntu-24.04, macos-14]
     runs-on: ${{ matrix.os }}
     steps:
 
-      - uses: krdlab/setup-haxe@v1
+      - uses: krdlab/setup-haxe@8f35d1215b93e940a76f9470e22e8a5ba6149598
         with:
           haxe-version: ${{ env.HAXE_VERSION }}
 
@@ -702,11 +702,11 @@ jobs:
     needs: package-haxelib
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-24.04, macos-13]
+        os: [windows-latest, ubuntu-24.04, macos-14]
     runs-on: ${{ matrix.os }}
     steps:
 
-      - uses: krdlab/setup-haxe@v1
+      - uses: krdlab/setup-haxe@8f35d1215b93e940a76f9470e22e8a5ba6149598
         with:
           haxe-version: 4.3.3 # minimum required version for HL/C is 4.3.3
 
@@ -816,13 +816,13 @@ jobs:
     strategy:
       matrix:
         haxe-version: [4.2.5]
-        os: [windows-latest, ubuntu-24.04, macos-13]
+        os: [windows-latest, ubuntu-24.04, macos-14]
     runs-on: ${{ matrix.os }}
     steps:
 
-      - uses: krdlab/setup-haxe@v1
+      - uses: krdlab/setup-haxe@8f35d1215b93e940a76f9470e22e8a5ba6149598
         with:
-          haxe-version: ${{ matrix.haxe-version }}
+          haxe-version: ${{ env.HAXE_VERSION }}
 
       - name: Set HAXEPATH (Windows)
         if: runner.os == 'Windows'
