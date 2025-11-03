@@ -16,6 +16,7 @@ import lime._internal.backend.flash.FlashWindow;
 import lime.app.Application;
 import lime.system.Orientation;
 import lime.ui.Window;
+import lime.ui.WindowVSyncMode;
 
 @:access(lime._internal.backend.flash.FlashApplication)
 @:access(lime.ui.Window)
