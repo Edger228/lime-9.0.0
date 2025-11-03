@@ -1362,6 +1362,54 @@ namespace lime {
 	}
 
 
+	int lime_font_get_strikethrough_position (value fontHandle) {
+
+		#ifdef LIME_FREETYPE
+		Font *font = (Font*)val_data (fontHandle);
+		return font->GetStrikethroughPosition ();
+		#else
+		return 0;
+		#endif
+
+	}
+
+
+	HL_PRIM int HL_NAME(hl_font_get_strikethrough_position) (HL_CFFIPointer* fontHandle) {
+
+		#ifdef LIME_FREETYPE
+		Font *font = (Font*)fontHandle->ptr;
+		return font->GetStrikethroughPosition ();
+		#else
+		return 0;
+		#endif
+
+	}
+
+
+	int lime_font_get_strikethrough_thickness (value fontHandle) {
+
+		#ifdef LIME_FREETYPE
+		Font *font = (Font*)val_data (fontHandle);
+		return font->GetStrikethroughThickness ();
+		#else
+		return 0;
+		#endif
+
+	}
+
+
+	HL_PRIM int HL_NAME(hl_font_get_strikethrough_thickness) (HL_CFFIPointer* fontHandle) {
+
+		#ifdef LIME_FREETYPE
+		Font *font = (Font*)fontHandle->ptr;
+		return font->GetStrikethroughThickness ();
+		#else
+		return 0;
+		#endif
+
+	}
+
+
 	int lime_font_get_units_per_em (value fontHandle) {
 
 		#ifdef LIME_FREETYPE
@@ -2867,6 +2915,42 @@ namespace lime {
 	}
 
 
+	int lime_system_get_first_gyroscope_sensor_id() {
+		#if defined(ANDROID) || defined (IPHONE)
+		return System::GetFirstGyroscopeSensorId();
+		#else
+		return -1;
+		#endif
+	}
+
+
+	HL_PRIM int HL_NAME(hl_system_get_first_gyroscope_sensor_id)() {
+		#if defined(ANDROID) || defined (IPHONE)
+		return System::GetFirstGyroscopeSensorId();
+		#else
+		return -1;
+		#endif
+	}
+
+
+	int lime_system_get_first_accelerometer_sensor_id() {
+		#if defined(ANDROID) || defined (IPHONE)
+		return System::GetFirstAccelerometerSensorId();
+		#else
+		return -1;
+		#endif
+	}
+
+
+	HL_PRIM int HL_NAME(hl_system_get_first_accelerometer_sensor_id)() {
+		#if defined(ANDROID) || defined (IPHONE)
+		return System::GetFirstAccelerometerSensorId();
+		#else
+		return -1;
+		#endif
+	}
+
+
 	int lime_system_get_num_displays () {
 
 		return System::GetNumDisplays ();
@@ -2877,6 +2961,20 @@ namespace lime {
 	HL_PRIM int HL_NAME(hl_system_get_num_displays) () {
 
 		return System::GetNumDisplays ();
+
+	}
+
+
+	int lime_system_get_device_orientation () {
+
+		return System::GetDeviceOrientation();
+
+	}
+
+
+	HL_PRIM int HL_NAME(hl_system_get_device_orientation) () {
+
+		return System::GetDeviceOrientation();
 
 	}
 
@@ -3984,6 +4082,8 @@ namespace lime {
 	DEFINE_PRIME1 (lime_font_get_num_glyphs);
 	DEFINE_PRIME1 (lime_font_get_underline_position);
 	DEFINE_PRIME1 (lime_font_get_underline_thickness);
+	DEFINE_PRIME1 (lime_font_get_strikethrough_position);
+	DEFINE_PRIME1 (lime_font_get_strikethrough_thickness);
 	DEFINE_PRIME1 (lime_font_get_units_per_em);
 	DEFINE_PRIME1 (lime_font_load);
 	DEFINE_PRIME1 (lime_font_load_bytes);
@@ -4043,7 +4143,10 @@ namespace lime {
 	DEFINE_PRIME3 (lime_system_get_directory);
 	DEFINE_PRIME1 (lime_system_get_display);
 	DEFINE_PRIME0 (lime_system_get_ios_tablet);
+	DEFINE_PRIME0 (lime_system_get_first_gyroscope_sensor_id);
+	DEFINE_PRIME0 (lime_system_get_first_accelerometer_sensor_id);
 	DEFINE_PRIME0 (lime_system_get_num_displays);
+	DEFINE_PRIME0 (lime_system_get_device_orientation);
 	DEFINE_PRIME0 (lime_system_get_platform_label);
 	DEFINE_PRIME0 (lime_system_get_platform_name);
 	DEFINE_PRIME0 (lime_system_get_platform_version);
@@ -4104,7 +4207,7 @@ namespace lime {
 
 	#define _ENUM "?"
 	// #define _TCFFIPOINTER _ABSTRACT (HL_CFFIPointer)
-	#define _TAPPLICATION_EVENT _OBJ (_I32 _I32)
+	#define _TAPPLICATION_EVENT _OBJ (_F64 _I32)
 	#define _TBYTES _OBJ (_I32 _BYTES)
 	#define _TCFFIPOINTER _DYN
 	#define _TCLIPBOARD_EVENT _OBJ (_I32)
@@ -4173,6 +4276,8 @@ namespace lime {
 	DEFINE_HL_PRIM (_I32, hl_font_get_num_glyphs, _TCFFIPOINTER);
 	DEFINE_HL_PRIM (_I32, hl_font_get_underline_position, _TCFFIPOINTER);
 	DEFINE_HL_PRIM (_I32, hl_font_get_underline_thickness, _TCFFIPOINTER);
+	DEFINE_HL_PRIM (_I32, hl_font_get_strikethrough_position, _TCFFIPOINTER);
+	DEFINE_HL_PRIM (_I32, hl_font_get_strikethrough_thickness, _TCFFIPOINTER);
 	DEFINE_HL_PRIM (_I32, hl_font_get_units_per_em, _TCFFIPOINTER);
 	// DEFINE_PRIME1 (lime_font_load);
 	DEFINE_HL_PRIM (_TCFFIPOINTER, hl_font_load_bytes, _TBYTES);
@@ -4232,7 +4337,10 @@ namespace lime {
 	DEFINE_HL_PRIM (_BYTES, hl_system_get_directory, _I32 _STRING _STRING);
 	DEFINE_HL_PRIM (_DYN, hl_system_get_display, _I32);
 	DEFINE_HL_PRIM (_BOOL, hl_system_get_ios_tablet, _NO_ARG);
+	DEFINE_HL_PRIM (_I32, hl_system_get_first_gyroscope_sensor_id, _NO_ARG);
+	DEFINE_HL_PRIM (_I32, hl_system_get_first_accelerometer_sensor_id, _NO_ARG);
 	DEFINE_HL_PRIM (_I32, hl_system_get_num_displays, _NO_ARG);
+	DEFINE_HL_PRIM (_I32, hl_system_get_device_orientation, _NO_ARG);
 	DEFINE_HL_PRIM (_BYTES, hl_system_get_platform_label, _NO_ARG);
 	DEFINE_HL_PRIM (_BYTES, hl_system_get_platform_name, _NO_ARG);
 	DEFINE_HL_PRIM (_BYTES, hl_system_get_platform_version, _NO_ARG);

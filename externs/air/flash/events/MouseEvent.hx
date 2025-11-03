@@ -10,7 +10,7 @@ extern class MouseEvent extends Event
 	var controlKey:Bool;
 	#end
 	var ctrlKey:Bool;
-	var delta:Int;
+	var delta:Float;
 	@:require(flash10) var isRelatedObjectInaccessible:Bool;
 	var localX:Float;
 	var localY:Float;
@@ -22,7 +22,7 @@ extern class MouseEvent extends Event
 	var stageY(default, never):Float;
 	function new(type:String, bubbles:Bool = true, cancelable:Bool = false, localX:Null<Float> = 0, localY:Null<Float> = 0,
 		?relatedObject:flash.display.InteractiveObject, ctrlKey:Bool = false, altKey:Bool = false, shiftKey:Bool = false, buttonDown:Bool = false,
-		delta:Int = 0):Void;
+		delta:Float = 0):Void;
 	function updateAfterEvent():Void;
 	static var CLICK(default, never):String;
 	@:require(flash11_2) static var CONTEXT_MENU(default, never):String;

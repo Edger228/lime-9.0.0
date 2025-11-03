@@ -47,11 +47,13 @@ namespace lime {
 			void ProcessJoystickEvent (SDL_Event* event);
 			void ProcessKeyEvent (SDL_Event* event);
 			void ProcessMouseEvent (SDL_Event* event);
+			#if defined(ANDROID) || defined (IPHONE)
+			void InitializeSensors ();
 			void ProcessSensorEvent (SDL_Event* event);
+			#endif
 			void ProcessTextEvent (SDL_Event* event);
 			void ProcessTouchEvent (SDL_Event* event);
 			void ProcessWindowEvent (SDL_Event* event);
-			int WaitEvent (SDL_Event* event);
 
 			static void UpdateFrame ();
 			static void UpdateFrame (void*);
@@ -61,16 +63,16 @@ namespace lime {
 			bool active;
 			ApplicationEvent applicationEvent;
 			ClipboardEvent clipboardEvent;
-			Uint32 currentUpdate;
+			double currentUpdate;
 			double framePeriod;
 			Uint32 initFlags;
 			DropEvent dropEvent;
 			GamepadEvent gamepadEvent;
 			JoystickEvent joystickEvent;
 			KeyEvent keyEvent;
-			Uint32 lastUpdate;
+			double lastUpdate;
 			MouseEvent mouseEvent;
-			Uint32 nextUpdate;
+			double nextUpdate;
 			OrientationEvent orientationEvent;
 			RenderEvent renderEvent;
 			SensorEvent sensorEvent;

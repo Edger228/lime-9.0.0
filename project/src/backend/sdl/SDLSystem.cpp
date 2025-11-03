@@ -61,6 +61,8 @@ namespace lime {
 	static int id_safeArea;
 	static bool init = false;
 
+	static double performanceFrequency = -1.0;
+	static double performanceCounter = -1.0;
 
 	const char* Clipboard::GetText () {
 
@@ -315,6 +317,10 @@ namespace lime {
 				id_supportedModes = val_id ("supportedModes");
 				id_width = val_id ("width");
 				id_safeArea = val_id ("safeArea");
+
+				performanceFrequency = (double)SDL_GetPerformanceFrequency();
+				performanceCounter = (double)SDL_GetPerformanceCounter();
+
 				init = true;
 
 			}
@@ -421,6 +427,13 @@ namespace lime {
 			return display;
 
 		} else {
+
+			if (!init) {
+				performanceFrequency = (double)SDL_GetPerformanceFrequency();
+				performanceCounter = (double)SDL_GetPerformanceCounter();
+
+				init = true;
+			}
 
 			const int id_bounds = hl_hash_utf8 ("bounds");
 			const int id_currentMode = hl_hash_utf8 ("currentMode");
@@ -567,6 +580,29 @@ namespace lime {
 
 	}
 
+	#if defined(ANDROID) || defined (IPHONE)
+
+	int System::GetFirstGyroscopeSensorId () {
+		int numSensors = SDL_NumSensors ();
+		for (int i = 0; i < numSensors; i++) {
+			if (SDL_SensorGetDeviceType (i) == SDL_SENSOR_GYRO) {
+				return SDL_SensorGetDeviceInstanceID(i);
+			}
+		}
+		return -1;
+	}
+
+	int System::GetFirstAccelerometerSensorId () {
+		int numSensors = SDL_NumSensors ();
+		for (int i = 0; i < numSensors; i++) {
+			if (SDL_SensorGetDeviceType (i) == SDL_SENSOR_ACCEL) {
+				return SDL_SensorGetDeviceInstanceID(i);
+			}
+		}
+		return -1;
+	}
+
+	#endif
 
 	int System::GetNumDisplays () {
 
@@ -577,7 +613,14 @@ namespace lime {
 
 	double System::GetTimer () {
 
-		return SDL_GetTicks ();
+		if(performanceCounter == -1.0) {
+			performanceCounter = (double)SDL_GetPerformanceCounter();
+		}
+		if(performanceFrequency == -1.0) {
+			performanceFrequency = (double)SDL_GetPerformanceFrequency();
+		}
+		const double counter = (double)SDL_GetPerformanceCounter() - performanceCounter;
+		return (counter / performanceFrequency) * 1000.0;
 
 	}
 

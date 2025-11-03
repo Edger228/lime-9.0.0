@@ -2,6 +2,8 @@
 #include "SDLGamepad.h"
 #include "SDLJoystick.h"
 #include <system/System.h>
+#include <thread>
+#include <cmath>
 
 #ifdef HX_MACOS
 #include <CoreFoundation/CoreFoundation.h>
@@ -22,10 +24,19 @@ namespace lime {
 	std::map<int, std::map<int, int> > gamepadsAxisMap;
 	bool inBackground = false;
 
+	double performanceFrequency = 0.0;
+	double performanceCounter = 0.0;
+
+	#if defined(ANDROID) || defined (IPHONE)
+	SDL_SensorID gyroscopeSensorID = -1;
+	SDL_Sensor* gyroscopeSensor = nullptr;
+
+	SDL_SensorID accelerometerSensorID = -1;
+	SDL_Sensor* accelerometerSensor = nullptr;
+	#endif
 
 	SDLApplication::SDLApplication () {
-
-		initFlags = SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_TIMER | SDL_INIT_JOYSTICK;
+		Uint32 initFlags = SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_TIMER | SDL_INIT_JOYSTICK;
 		#if defined(LIME_MOJOAL) || defined(LIME_OPENALSOFT)
 		initFlags |= SDL_INIT_AUDIO;
 		#endif
@@ -35,12 +46,14 @@ namespace lime {
 			printf ("Could not initialize SDL: %s.\n", SDL_GetError ());
 
 		}
+		performanceFrequency = (double)SDL_GetPerformanceFrequency();
+		performanceCounter = (double)SDL_GetPerformanceCounter();
 
 		SDL_LogSetPriority (SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_WARN);
 
 		currentApplication = this;
 
-		framePeriod = 1000.0 / 60.0;
+		framePeriod = 1.0;
 
 		currentUpdate = 0;
 		lastUpdate = 0;
@@ -53,17 +66,21 @@ namespace lime {
 		JoystickEvent joystickEvent;
 		KeyEvent keyEvent;
 		MouseEvent mouseEvent;
-		OrientationEvent orientationEvent;
 		RenderEvent renderEvent;
 		SensorEvent sensorEvent;
 		TextEvent textEvent;
 		TouchEvent touchEvent;
 		WindowEvent windowEvent;
 
+		#if defined(ANDROID) || defined (IPHONE)
+		SDL_EventState (SDL_SENSORUPDATE, SDL_ENABLE);
+		#endif
+
 		SDL_EventState (SDL_DROPFILE, SDL_ENABLE);
-		SDL_EventState (SDL_DROPTEXT, SDL_ENABLE);
-		SDL_EventState (SDL_DROPBEGIN, SDL_ENABLE);
-		SDL_EventState (SDL_DROPCOMPLETE, SDL_ENABLE);
+
+		#if defined(ANDROID) || defined (IPHONE)
+		InitializeSensors ();
+		#endif
 		SDLJoystick::Init ();
 
 		#ifdef HX_MACOS
@@ -81,10 +98,41 @@ namespace lime {
 
 	}
 
+	#if defined(ANDROID) || defined (IPHONE)
+	void SDLApplication::InitializeSensors () {
+
+		gyroscopeSensorID = System::GetFirstGyroscopeSensorId ();
+
+		if (gyroscopeSensorID > 0)
+			gyroscopeSensor = SDL_SensorOpen (gyroscopeSensorID);
+
+		accelerometerSensorID = System::GetFirstAccelerometerSensorId ();
+
+		if (gyroscopeSensorID > 0)
+			accelerometerSensor = SDL_SensorOpen (gyroscopeSensorID);
+
+	}
+	#endif
 
 	SDLApplication::~SDLApplication () {
 
+		#if defined(ANDROID) || defined(IPHONE)
+		if (gyroscopeSensor) {
 
+			SDL_SensorClose (gyroscopeSensor);
+			gyroscopeSensor = nullptr;
+			gyroscopeSensorID = -1;
+
+		}
+
+		if (accelerometerSensor) {
+
+			SDL_SensorClose (accelerometerSensor);
+			accelerometerSensor = nullptr;
+			accelerometerSensorID = -1;
+
+		}
+		#endif
 
 	}
 
@@ -117,6 +165,32 @@ namespace lime {
 
 	}
 
+	double getTime() {
+		const double counter = (double)SDL_GetPerformanceCounter() - performanceCounter;
+		return (counter / performanceFrequency) * 1000.0;
+
+	}
+	void busyWait(double ms) {
+		const double start = getTime();
+		while (getTime() - start < ms) {
+			std::this_thread::yield();
+		}
+	}
+
+	void coolSleep(double sleepFor) {
+		double dt = 0.0;
+		double start = getTime();
+		double threshold = sleepFor - (0.9765625 * 2.2);
+
+		while ((dt = getTime() - start) < threshold)
+			SDL_Delay(1);
+
+		double end = getTime();
+
+		double remainder = (end - start) - dt;
+		if (remainder > 0)
+			busyWait(remainder);
+	}
 
 	void SDLApplication::HandleEvent (SDL_Event* event) {
 
@@ -132,23 +206,22 @@ namespace lime {
 			case SDL_USEREVENT:
 
 				if (!inBackground) {
-
-					currentUpdate = SDL_GetTicks ();
 					applicationEvent.type = UPDATE;
 					applicationEvent.deltaTime = currentUpdate - lastUpdate;
-					lastUpdate = currentUpdate;
 
-					nextUpdate += framePeriod;
-
-					while (nextUpdate <= currentUpdate) {
-
-						nextUpdate += framePeriod;
-
-					}
+					double start = getTime();
 
 					ApplicationEvent::Dispatch (&applicationEvent);
 					RenderEvent::Dispatch (&renderEvent);
 
+					double end = getTime();
+					double remainder = end - start;
+
+					if (framePeriod > 0.0) {
+						double sleepDuration = framePeriod - remainder;
+						if (sleepDuration > 0)
+							coolSleep(sleepDuration);
+					}
 				}
 
 				break;
@@ -187,29 +260,7 @@ namespace lime {
 				ProcessGamepadEvent (event);
 				break;
 
-			case SDL_DISPLAYEVENT:
-
-				switch (event->display.event) {
-
-					case SDL_DISPLAYEVENT_ORIENTATION:
-
-						// this is the orientation of what is rendered, which
-						// may not exactly match the orientation of the device,
-						// if the app was locked to portrait or landscape.
-						orientationEvent.type = DISPLAY_ORIENTATION_CHANGE;
-						orientationEvent.orientation = event->display.data1;
-						orientationEvent.display = event->display.display;
-						OrientationEvent::Dispatch (&orientationEvent);
-
-						break;
-
-				}
-				break;
-
 			case SDL_DROPFILE:
-			case SDL_DROPTEXT:
-			case SDL_DROPBEGIN:
-			case SDL_DROPCOMPLETE:
 
 				ProcessDropEvent (event);
 				break;
@@ -221,18 +272,17 @@ namespace lime {
 				ProcessTouchEvent (event);
 				break;
 
+			#if defined(ANDROID) || defined (IPHONE)
+			case SDL_SENSORUPDATE:
+
+				ProcessSensorEvent (event);
+				break;
+
+			#endif
+
 			case SDL_JOYAXISMOTION:
 
-				if (SDLJoystick::IsAccelerometer (event->jaxis.which)) {
-
-					ProcessSensorEvent (event);
-
-				} else {
-
-					ProcessJoystickEvent (event);
-
-				}
-
+				ProcessJoystickEvent (event);
 				break;
 
 			case SDL_JOYBALLMOTION:
@@ -353,11 +403,10 @@ namespace lime {
 
 
 	void SDLApplication::Init () {
-
 		active = true;
-		lastUpdate = SDL_GetTicks ();
-		nextUpdate = lastUpdate;
 
+		double ticks = (double)SDL_GetPerformanceCounter();
+		lastUpdate = ticks;
 	}
 
 
@@ -378,27 +427,8 @@ namespace lime {
 
 		if (DropEvent::callback) {
 
-			switch (event->type)
-			{
-				case SDL_DROPFILE:
-					dropEvent.type = DROP_FILE;
-					dropEvent.file = (vbyte*)event->drop.file;
-					break;
-				case SDL_DROPTEXT:
-					dropEvent.type = DROP_TEXT;
-					dropEvent.file = (vbyte*)event->drop.file;
-					break;
-				case SDL_DROPBEGIN:
-					dropEvent.type = DROP_BEGIN;
-					dropEvent.file = 0;
-					break;
-				case SDL_DROPCOMPLETE:
-					dropEvent.type = DROP_COMPLETE;
-					dropEvent.file = 0;
-					break;
-				default:
-					break;
-			}
+			dropEvent.type = DROP_FILE;
+			dropEvent.file = (vbyte*)event->drop.file;
 
 			DropEvent::Dispatch (&dropEvent);
 			SDL_free (dropEvent.file);
@@ -694,26 +724,35 @@ namespace lime {
 	}
 
 
-	void SDLApplication::ProcessSensorEvent (SDL_Event* event) {
+	#if defined(ANDROID) || defined (IPHONE)
+	void SDLApplication::ProcessSensorEvent(SDL_Event* event) {
 
 		if (SensorEvent::callback) {
 
-			double value = event->jaxis.value / 32767.0f;
+			if (event->sensor.which == gyroscopeSensorID) {
 
-			switch (event->jaxis.axis) {
+				sensorEvent.type = SENSOR_GYROSCOPE;
+				sensorEvent.id = event->sensor.which;
+				sensorEvent.x = event->sensor.data[0];
+				sensorEvent.y = event->sensor.data[1];
+				sensorEvent.z = event->sensor.data[2];
+				SensorEvent::Dispatch(&sensorEvent);
 
-				case 0: sensorEvent.x = value; break;
-				case 1: sensorEvent.y = value; break;
-				case 2: sensorEvent.z = value; break;
-				default: break;
+			} else if (event->sensor.which == accelerometerSensorID) {
+
+				sensorEvent.type = SENSOR_ACCELEROMETER;
+				sensorEvent.id = event->sensor.which;
+				sensorEvent.x = event->sensor.data[0];
+				sensorEvent.y = event->sensor.data[1];
+				sensorEvent.z = event->sensor.data[2];
+				SensorEvent::Dispatch(&sensorEvent);
 
 			}
-
-			SensorEvent::Dispatch (&sensorEvent);
 
 		}
 
 	}
+	#endif
 
 
 	void SDLApplication::ProcessTextEvent (SDL_Event* event) {
@@ -835,12 +874,10 @@ namespace lime {
 
 
 	int SDLApplication::Quit () {
-
 		applicationEvent.type = EXIT;
 		ApplicationEvent::Dispatch (&applicationEvent);
 
 		SDL_Quit ();
-
 		return 0;
 
 	}
@@ -863,19 +900,13 @@ namespace lime {
 
 		} else {
 
-			framePeriod = 1000.0;
+			framePeriod = 0.0;
 
 		}
 
 	}
 
-
-	static SDL_TimerID timerID = 0;
-	bool timerActive = false;
-	bool firstTime = true;
-
-	Uint32 OnTimer (Uint32 interval, void *) {
-
+	void PushUpdate(void) {
 		SDL_Event event;
 		SDL_UserEvent userevent;
 		userevent.type = SDL_USEREVENT;
@@ -885,90 +916,39 @@ namespace lime {
 		event.type = SDL_USEREVENT;
 		event.user = userevent;
 
-		timerActive = false;
-		timerID = 0;
-
 		SDL_PushEvent (&event);
-
-		return 0;
-
 	}
 
 
 	bool SDLApplication::Update () {
+		lastUpdate = currentUpdate;
+		currentUpdate = getTime();
 
+		double dt = currentUpdate - lastUpdate;
+
+		double dtLimit = framePeriod * 4;
+		if (dt > dtLimit)
+			dt = dtLimit;
+
+		nextUpdate += dt;
+
+		if(nextUpdate >= framePeriod) {
+			PushUpdate();
+			nextUpdate -= framePeriod;
+		}
 		SDL_Event event;
-		event.type = -1;
-
-		#if (!defined (IPHONE) && !defined (EMSCRIPTEN))
-
-		if (active && (firstTime || WaitEvent (&event))) {
-
-			firstTime = false;
-
+		while (SDL_PollEvent (&event)) {
 			HandleEvent (&event);
 			event.type = -1;
 			if (!active)
 				return active;
-
-		#endif
-
-			while (SDL_PollEvent (&event)) {
-
-				HandleEvent (&event);
-				event.type = -1;
-				if (!active)
-					return active;
-
-			}
-
-			currentUpdate = SDL_GetTicks ();
-
-		#if defined (IPHONE) || defined (EMSCRIPTEN)
-
-			if (currentUpdate >= nextUpdate) {
-
-				event.type = SDL_USEREVENT;
-				HandleEvent (&event);
-				event.type = -1;
-
-			}
-
-		#else
-
-			if (currentUpdate >= nextUpdate) {
-
-				if (timerActive) SDL_RemoveTimer (timerID);
-				OnTimer (0, 0);
-
-			} else if (!timerActive) {
-
-				timerActive = true;
-				timerID = SDL_AddTimer (nextUpdate - currentUpdate, OnTimer, 0);
-
-			}
-
 		}
-
-		#endif
-
 		return active;
-
 	}
 
 
 	void SDLApplication::UpdateFrame () {
-
-		#ifdef EMSCRIPTEN
-		System::GCTryExitBlocking ();
-		#endif
-
 		currentApplication->Update ();
-
-		#ifdef EMSCRIPTEN
-		System::GCTryEnterBlocking ();
-		#endif
-
 	}
 
 
@@ -977,52 +957,6 @@ namespace lime {
 		UpdateFrame ();
 
 	}
-
-
-	int SDLApplication::WaitEvent (SDL_Event *event) {
-
-		#if defined(HX_MACOS) || defined(ANDROID)
-
-		System::GCEnterBlocking ();
-		int result = SDL_WaitEvent (event);
-		System::GCExitBlocking ();
-		return result;
-
-		#else
-
-		bool isBlocking = false;
-
-		for(;;) {
-
-			SDL_PumpEvents ();
-
-			switch (SDL_PeepEvents (event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT)) {
-
-				case -1:
-
-					if (isBlocking) System::GCExitBlocking ();
-					return 0;
-
-				case 1:
-
-					if (isBlocking) System::GCExitBlocking ();
-					return 1;
-
-				default:
-
-					if (!isBlocking) System::GCEnterBlocking ();
-					isBlocking = true;
-					SDL_Delay (1);
-					break;
-
-			}
-
-		}
-
-		#endif
-
-	}
-
 
 	Application* CreateApplication () {
 

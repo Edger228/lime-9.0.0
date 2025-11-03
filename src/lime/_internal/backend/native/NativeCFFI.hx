@@ -135,6 +135,10 @@ class NativeCFFI
 
 	@:cffi private static function lime_font_get_underline_thickness(handle:Dynamic):Int;
 
+	@:cffi private static function lime_font_get_strikethrough_position(handle:Dynamic):Int;
+
+	@:cffi private static function lime_font_get_strikethrough_thickness(handle:Dynamic):Int;
+
 	@:cffi private static function lime_font_get_units_per_em(handle:Dynamic):Int;
 
 	@:cffi private static function lime_font_load(data:Dynamic):Dynamic;
@@ -255,7 +259,13 @@ class NativeCFFI
 
 	@:cffi private static function lime_system_get_ios_tablet():Bool;
 
+	@:cffi private static function lime_system_get_first_gyroscope_sensor_id():Int;
+
+	@:cffi private static function lime_system_get_first_accelerometer_sensor_id():Int;
+
 	@:cffi private static function lime_system_get_num_displays():Int;
+
+	@:cffi private static function lime_system_get_device_orientation():Int;
 
 	@:cffi private static function lime_system_get_platform_label():Dynamic;
 
@@ -431,6 +441,10 @@ class NativeCFFI
 		"oi", false));
 	private static var lime_font_get_underline_thickness = new cpp.Callable<cpp.Object->Int>(cpp.Prime._loadPrime("lime", "lime_font_get_underline_thickness",
 		"oi", false));
+	private static var lime_font_get_strikethrough_position = new cpp.Callable<cpp.Object->Int>(cpp.Prime._loadPrime("lime", "lime_font_get_strikethrough_position",
+		"oi", false));
+	private static var lime_font_get_strikethrough_thickness = new cpp.Callable<cpp.Object->Int>(cpp.Prime._loadPrime("lime", "lime_font_get_strikethrough_thickness",
+		"oi", false));
 	private static var lime_font_get_units_per_em = new cpp.Callable<cpp.Object->Int>(cpp.Prime._loadPrime("lime", "lime_font_get_units_per_em", "oi", false));
 	private static var lime_font_load = new cpp.Callable<cpp.Object->cpp.Object>(cpp.Prime._loadPrime("lime", "lime_font_load", "oo", false));
 	private static var lime_font_load_bytes = new cpp.Callable<cpp.Object->cpp.Object>(cpp.Prime._loadPrime("lime", "lime_font_load_bytes", "oo", false));
@@ -535,6 +549,9 @@ class NativeCFFI
 	private static var lime_system_get_display = new cpp.Callable<Int->cpp.Object>(cpp.Prime._loadPrime("lime", "lime_system_get_display", "io", false));
 	private static var lime_system_get_ios_tablet = new cpp.Callable<Void->Bool>(cpp.Prime._loadPrime("lime", "lime_system_get_ios_tablet", "b", false));
 	private static var lime_system_get_num_displays = new cpp.Callable<Void->Int>(cpp.Prime._loadPrime("lime", "lime_system_get_num_displays", "i", false));
+	private static var lime_system_get_device_orientation = new cpp.Callable<Void->Int>(cpp.Prime._loadPrime("lime", "lime_system_get_device_orientation", "i", false));
+	private static var lime_system_get_first_gyroscope_sensor_id = new cpp.Callable<Void->Int>(cpp.Prime._loadPrime("lime", "lime_system_get_first_gyroscope_sensor_id", "i", false));
+	private static var lime_system_get_first_accelerometer_sensor_id = new cpp.Callable<Void->Int>(cpp.Prime._loadPrime("lime", "lime_system_get_first_accelerometer_sensor_id", "i", false));
 	private static var lime_system_get_platform_label = new cpp.Callable<Void->cpp.Object>(cpp.Prime._loadPrime("lime", "lime_system_get_platform_label", "o",
 		false));
 	private static var lime_system_get_platform_name = new cpp.Callable<Void->cpp.Object>(cpp.Prime._loadPrime("lime", "lime_system_get_platform_name", "o",
@@ -669,6 +686,8 @@ class NativeCFFI
 	private static var lime_font_get_num_glyphs = CFFI.load("lime", "lime_font_get_num_glyphs", 1);
 	private static var lime_font_get_underline_position = CFFI.load("lime", "lime_font_get_underline_position", 1);
 	private static var lime_font_get_underline_thickness = CFFI.load("lime", "lime_font_get_underline_thickness", 1);
+	private static var lime_font_get_strikethrough_position = CFFI.load("lime", "lime_font_get_strikethrough_position", 1);
+	private static var lime_font_get_strikethrough_thickness = CFFI.load("lime", "lime_font_get_strikethrough_thickness", 1);
 	private static var lime_font_get_units_per_em = CFFI.load("lime", "lime_font_get_units_per_em", 1);
 	private static var lime_font_load = CFFI.load("lime", "lime_font_load", 1);
 	private static var lime_font_load_bytes = CFFI.load("lime", "lime_font_load_bytes", 1);
@@ -728,6 +747,9 @@ class NativeCFFI
 	private static var lime_system_get_display = CFFI.load("lime", "lime_system_get_display", 1);
 	private static var lime_system_get_ios_tablet = CFFI.load("lime", "lime_system_get_ios_tablet", 0);
 	private static var lime_system_get_num_displays = CFFI.load("lime", "lime_system_get_num_displays", 0);
+	private static var lime_system_get_device_orientation = CFFI.load("lime", "lime_system_get_device_orientation", 0);
+	private static var lime_system_get_first_gyroscope_sensor_id = CFFI.load("lime", "lime_system_get_first_gyroscope_sensor_id", 0);
+	private static var lime_system_get_first_accelerometer_sensor_id = CFFI.load("lime", "lime_system_get_first_accelerometer_sensor_id", 0);
 	private static var lime_system_get_platform_label = CFFI.load("lime", "lime_system_get_platform_label", 0);
 	private static var lime_system_get_platform_name = CFFI.load("lime", "lime_system_get_platform_name", 0);
 	private static var lime_system_get_platform_version = CFFI.load("lime", "lime_system_get_platform_version", 0);
@@ -962,6 +984,16 @@ class NativeCFFI
 	}
 
 	@:hlNative("lime", "hl_font_get_underline_thickness") private static function lime_font_get_underline_thickness(handle:CFFIPointer):Int
+	{
+		return 0;
+	}
+
+	@:hlNative("lime", "hl_font_get_strikethrough_position") private static function lime_font_get_strikethrough_position(handle:CFFIPointer):Int
+	{
+		return 0;
+	}
+
+	@:hlNative("lime", "hl_font_get_strikethrough_thickness") private static function lime_font_get_strikethrough_thickness(handle:CFFIPointer):Int
 	{
 		return 0;
 	}
@@ -1204,7 +1236,22 @@ class NativeCFFI
 		return false;
 	}
 
+	@:hlNative("lime", "hl_system_get_first_gyroscope_sensor_id") private static function lime_system_get_first_gyroscope_sensor_id():Int
+	{
+		return -1;
+	}
+
+	@:hlNative("lime", "hl_system_get_first_accelerometer_sensor_id") private static function lime_system_get_first_accelerometer_sensor_id():Int
+	{
+		return -1;
+	}
+
 	@:hlNative("lime", "hl_system_get_num_displays") private static function lime_system_get_num_displays():Int
+	{
+		return 0;
+	}
+
+	@:hlNative("lime", "hl_system_get_device_orientation") private static function lime_system_get_device_orientation():Int
 	{
 		return 0;
 	}

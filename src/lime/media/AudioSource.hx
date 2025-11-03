@@ -10,8 +10,8 @@ import lime.math.Vector4;
 @:noDebug
 #end
 /**
-	The `AudioSource` class provides a way to control audio playback in a Lime application. 
-	It allows for playing, pausing, and stopping audio, as well as controlling various 
+	The `AudioSource` class provides a way to control audio playback in a Lime application.
+	It allows for playing, pausing, and stopping audio, as well as controlling various
 	audio properties such as gain, pitch, and looping.
 
 	Depending on the platform, the audio backend may vary, but the API remains consistent.
@@ -24,7 +24,7 @@ class AudioSource
 		An event that is dispatched when the audio playback is complete.
 	**/
 	public var onComplete = new Event<Void->Void>();
-	
+
 	/**
 		The `AudioBuffer` associated with this `AudioSource`.
 	**/
@@ -33,7 +33,7 @@ class AudioSource
 	/**
 		The current playback position of the audio, in milliseconds.
 	**/
-	public var currentTime(get, set):Int;
+	public var currentTime(get, set):Float;
 
 	/**
 		The gain (volume) of the audio. A value of `1.0` represents the default volume.
@@ -43,7 +43,7 @@ class AudioSource
 	/**
 		The length of the audio, in milliseconds.
 	**/
-	public var length(get, set):Int;
+	public var length(get, set):Float;
 
 	/**
 		The number of times the audio will loop. A value of `0` means the audio will not loop.
@@ -58,7 +58,7 @@ class AudioSource
 	/**
 		The offset within the audio buffer to start playback, in samples.
 	**/
-	public var offset:Int;
+	public var offset:Float;
 
 	/**
 		The 3D position of the audio source, represented as a `Vector4`.
@@ -74,7 +74,7 @@ class AudioSource
 		@param length The length of the audio to play, in milliseconds. If `null`, the full buffer is used.
 		@param loops The number of times to loop the audio. `0` means no looping.
 	**/
-	public function new(buffer:AudioBuffer = null, offset:Int = 0, length:Null<Int> = null, loops:Int = 0)
+	public function new(buffer:AudioBuffer = null, offset:Float = 0, length:Null<Float> = null, loops:Int = 0)
 	{
 		this.buffer = buffer;
 		this.offset = offset;
@@ -132,12 +132,12 @@ class AudioSource
 	}
 
 	// Get & Set Methods
-	@:noCompletion private function get_currentTime():Int
+	@:noCompletion private function get_currentTime():Float
 	{
 		return __backend.getCurrentTime();
 	}
 
-	@:noCompletion private function set_currentTime(value:Int):Int
+	@:noCompletion private function set_currentTime(value:Float):Float
 	{
 		return __backend.setCurrentTime(value);
 	}
@@ -152,12 +152,12 @@ class AudioSource
 		return __backend.setGain(value);
 	}
 
-	@:noCompletion private function get_length():Int
+	@:noCompletion private function get_length():Float
 	{
 		return __backend.getLength();
 	}
 
-	@:noCompletion private function set_length(value:Int):Int
+	@:noCompletion private function set_length(value:Float):Float
 	{
 		return __backend.setLength(value);
 	}
