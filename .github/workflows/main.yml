@@ -2,12 +2,12 @@ name: CI
 on: [push, pull_request]
 
 env:
-  HAXE_VERSION: 4.2.5
+  HAXE_VERSION: 4.3.7
 
 jobs:
 
   linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
 
       - uses: actions/checkout@v4
@@ -29,7 +29,7 @@ jobs:
 
       - name: Install Haxe dependencies
         run: |
-          haxelib git hxcpp https://github.com/FunkinCrew/hxcpp --quiet
+          haxelib install hxcpp --quiet
           haxelib install format --quiet
           haxelib install hxp --quiet
 
@@ -120,7 +120,7 @@ jobs:
 
       - name: Install Haxe dependencies
         run: |
-          haxelib git hxcpp https://github.com/FunkinCrew/hxcpp --quiet
+          haxelib install hxcpp --quiet
           haxelib install format --quiet
           haxelib install hxp --quiet
 
@@ -200,7 +200,7 @@ jobs:
 
       - name: Install Haxe dependencies
         run: |
-          haxelib git hxcpp https://github.com/FunkinCrew/hxcpp --quiet
+          haxelib install hxcpp --quiet
           haxelib install format --quiet
           haxelib install hxp --quiet
 
@@ -269,7 +269,7 @@ jobs:
           lime build SimpleAudio windows -release -verbose -nocolor
 
   android:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
 
       - uses: actions/checkout@v4
@@ -366,7 +366,7 @@ jobs:
 
       - name: Install Haxe dependencies
         run: |
-          haxelib git hxcpp https://github.com/FunkinCrew/hxcpp --quiet
+          haxelib install hxcpp --quiet
           haxelib install format --quiet
           haxelib install hxp --quiet
 
@@ -412,7 +412,7 @@ jobs:
 
   package-haxelib:
     needs: [linux, macos, windows, android, ios]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
 
       - uses: actions/checkout@v4
@@ -429,7 +429,7 @@ jobs:
 
       - name: Install Haxe dependencies
         run: |
-          haxelib git hxcpp https://github.com/FunkinCrew/hxcpp --quiet
+          haxelib install hxcpp --quiet
           haxelib install format --quiet
           haxelib install hxp --quiet
           haxelib install svg --quiet
@@ -527,7 +527,7 @@ jobs:
           if-no-files-found: error
 
   docs:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
 
       - uses: actions/checkout@v4
@@ -557,7 +557,7 @@ jobs:
           if-no-files-found: error
 
   flash-samples:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
 
       - uses: actions/checkout@v4
@@ -622,7 +622,7 @@ jobs:
 
       - name: Install Haxe dependencies
         run: |
-          haxelib git hxcpp https://github.com/FunkinCrew/hxcpp --quiet
+          haxelib install hxcpp --quiet
           haxelib install format --quiet
           haxelib install hxp --quiet
           haxelib git lime-samples https://github.com/openfl/lime-samples --quiet
@@ -652,7 +652,7 @@ jobs:
     needs: package-haxelib
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-20.04, macos-13]
+        os: [windows-latest, ubuntu-24.04, macos-13]
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -702,7 +702,7 @@ jobs:
     needs: package-haxelib
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-20.04, macos-13]
+        os: [windows-latest, ubuntu-24.04, macos-13]
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -750,7 +750,7 @@ jobs:
 
   html5-samples:
     needs: package-haxelib
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         haxe-version: [4.0.5, 4.1.5, 4.2.5, 4.3.6]
@@ -816,7 +816,7 @@ jobs:
     strategy:
       matrix:
         haxe-version: [4.2.5]
-        os: [windows-latest, ubuntu-20.04, macos-13]
+        os: [windows-latest, ubuntu-24.04, macos-13]
     runs-on: ${{ matrix.os }}
     steps:
 
@@ -863,7 +863,7 @@ jobs:
           lime build SimpleAudio neko -release -verbose -nocolor
 
   notify:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [package-haxelib, docs, android, flash-samples, air-samples, hashlink-samples, hashlinkc-samples, html5-samples, ios, linux, macos, neko-samples, windows]
     if: ${{ github.repository == 'openfl/lime' && github.event_name != 'pull_request' }}
     steps:
