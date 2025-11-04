@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2022 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -81,7 +81,7 @@ static char *executable_path() {
 	if ( _NSGetExecutablePath(path, &path_len) )
 		return NULL;
 	return path;
-#elif defined(NEKO_BSD)
+#elif defined(NEKO_BSD) && defined(KERN_PROC_PATHNAME)
         int mib[4];
         mib[0] = CTL_KERN;
         mib[1] = KERN_PROC;
@@ -302,7 +302,7 @@ int main( int argc, char *argv[] ) {
 #			ifdef NEKO_STANDALONE
 			report(vm,alloc_string("No embedded module in this executable"),0);
 #			else
-			printf("NekoVM %d.%d.%d (c)2005-2017 Haxe Foundation\n  Usage : neko <file>\n",NEKO_VERSION_MAJOR,NEKO_VERSION_MINOR,NEKO_VERSION_PATCH);
+			printf("NekoVM %d.%d.%d (c)2005-%d Haxe Foundation\n  Usage : neko <file>\n",NEKO_VERSION_MAJOR,NEKO_VERSION_MINOR,NEKO_VERSION_PATCH,NEKO_BUILD_YEAR);
 #			endif
 			mload = NULL;
 			r = 1;
@@ -340,7 +340,13 @@ int main( int argc, char *argv[] ) {
 	vm = NULL;
 	mload = NULL;
 	neko_vm_select(NULL);
+	#ifdef NEKO_THREADS
+	/* With threads enabled, other threads may crash if globals are freed,
+	   so only do a garbage collection there. */
+	neko_gc_major();
+	#else
 	neko_global_free();
+	#endif
 	return r;
 }
 

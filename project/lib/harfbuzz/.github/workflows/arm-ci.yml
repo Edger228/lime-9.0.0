@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   arm-none-eabi:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     container:
       image: devkitpro/devkitarm:latest
     steps:

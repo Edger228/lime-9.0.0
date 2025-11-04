@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2022 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,7 +47,7 @@
 #	define HANDLE_EINTR(x)	if( errno == EINTR ) goto x
 #endif
 
-#if defined(OS_WINDOWS) || defined(OS_MAC)
+#ifndef MSG_NOSIGNAL
 #	define MSG_NOSIGNAL 0
 #endif
 
@@ -73,7 +73,7 @@ void psock_init() {
 
 PSOCK psock_create() {
 	PSOCK s = socket(AF_INET,SOCK_STREAM,0);
-#	if defined(OS_MAC) || defined(OS_BSD)
+#	if defined(OS_MAC) || (defined(OS_BSD) && defined(SO_NOSIGPIPE))
 	if( s != INVALID_SOCKET )
 		setsockopt(s,SOL_SOCKET,SO_NOSIGPIPE,NULL,0);
 #	endif
@@ -120,7 +120,7 @@ PHOST phost_resolve( const char *host ) {
 	PHOST ip = inet_addr(host);
 	if( ip == INADDR_NONE ) {
 		struct hostent *h;
-#	if defined(OS_WINDOWS) || defined(OS_MAC) || defined(OS_CYGWIN)
+#	if defined(OS_WINDOWS) || defined(OS_MAC) || defined(OS_CYGWIN) || defined(__NetBSD__) || defined(__OpenBSD__)
 		h = gethostbyname(host);
 #	else
 		struct hostent hbase;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2017 Haxe Foundation
+ * Copyright (C)2005-2022 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -61,7 +61,7 @@
 #	define EPOLLOUT 0x004
 #endif
 
-#if defined(NEKO_WINDOWS) || defined(NEKO_MAC)
+#ifndef MSG_NOSIGNAL
 #	define MSG_NOSIGNAL 0
 #endif
 
@@ -371,7 +371,7 @@ static value host_resolve( value host ) {
 	ip = inet_addr(val_string(host));
 	if( ip == INADDR_NONE ) {
 		struct hostent *h;
-#	if defined(NEKO_WINDOWS) || defined(NEKO_MAC) || defined(NEKO_CYGWIN)
+#	if defined(NEKO_WINDOWS) || defined(NEKO_MAC) || defined(NEKO_CYGWIN) || defined(__NetBSD__) || defined(__OpenBSD__)
 		h = gethostbyname(val_string(host));
 #	else
 		struct hostent hbase;

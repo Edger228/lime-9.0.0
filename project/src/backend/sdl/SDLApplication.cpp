@@ -176,7 +176,7 @@ namespace lime {
 	void preciseSleep(double ms) {
 		auto start = std::chrono::high_resolution_clock::now();
 		auto duration = std::chrono::duration<double, std::milli>(ms);
-		
+
 		while (std::chrono::high_resolution_clock::now() - start < duration) {
 			std::this_thread::sleep_for(std::chrono::microseconds(100));
 		}
@@ -644,17 +644,21 @@ namespace lime {
 
 			if (keyEvent.type == KEY_DOWN) {
 
-				if (keyEvent.keyCode == SDLK_CAPSLOCK) keyEvent.modifier |= KMOD_CAPS;
-				if (keyEvent.keyCode == SDLK_LALT) keyEvent.modifier |= KMOD_LALT;
-				if (keyEvent.keyCode == SDLK_LCTRL) keyEvent.modifier |= KMOD_LCTRL;
-				if (keyEvent.keyCode == SDLK_LGUI) keyEvent.modifier |= KMOD_LGUI;
-				if (keyEvent.keyCode == SDLK_LSHIFT) keyEvent.modifier |= KMOD_LSHIFT;
-				if (keyEvent.keyCode == SDLK_MODE) keyEvent.modifier |= KMOD_MODE;
-				if (keyEvent.keyCode == SDLK_NUMLOCKCLEAR) keyEvent.modifier |= KMOD_NUM;
-				if (keyEvent.keyCode == SDLK_RALT) keyEvent.modifier |= KMOD_RALT;
-				if (keyEvent.keyCode == SDLK_RCTRL) keyEvent.modifier |= KMOD_RCTRL;
-				if (keyEvent.keyCode == SDLK_RGUI) keyEvent.modifier |= KMOD_RGUI;
-				if (keyEvent.keyCode == SDLK_RSHIFT) keyEvent.modifier |= KMOD_RSHIFT;
+				SDL_Keycode key = event->key.keysym.sym;
+
+				switch (key) {
+					case SDLK_CAPSLOCK: keyEvent.modifier |= KMOD_CAPS; break;
+					case SDLK_LALT: keyEvent.modifier |= KMOD_LALT; break;
+					case SDLK_LCTRL: keyEvent.modifier |= KMOD_LCTRL; break;
+					case SDLK_LGUI: keyEvent.modifier |= KMOD_LGUI; break;
+					case SDLK_LSHIFT: keyEvent.modifier |= KMOD_LSHIFT; break;
+					case SDLK_MODE: keyEvent.modifier |= KMOD_MODE; break;
+					case SDLK_NUMLOCKCLEAR: keyEvent.modifier |= KMOD_NUM; break;
+					case SDLK_RALT: keyEvent.modifier |= KMOD_RALT; break;
+					case SDLK_RCTRL: keyEvent.modifier |= KMOD_RCTRL; break;
+					case SDLK_RGUI: keyEvent.modifier |= KMOD_RGUI; break;
+					case SDLK_RSHIFT: keyEvent.modifier |= KMOD_RSHIFT; break;
+				}
 
 			}
 
