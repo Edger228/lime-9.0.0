@@ -7,6 +7,8 @@
 #ifdef HX_WINDOWS
 #include <SDL_syswm.h>
 #include <Windows.h>
+#include <dwmapi.h>
+#pragma comment(lib, "dwmapi.lib")
 #undef CreateWindow
 #endif
 
@@ -270,6 +272,10 @@ namespace lime {
 			}
 
 		}
+
+		#ifdef HX_WINDOWS
+        SetSystemTheme();
+        #endif
 
 		if (!context) {
 
@@ -1136,6 +1142,62 @@ namespace lime {
 		SDL_WarpMouseInWindow (sdlWindow, x, y);
 
 	}
+
+
+	#ifdef HX_WINDOWS
+    bool IsSystemDarkTheme() {
+        HKEY hKey;
+        DWORD value = 0;
+        DWORD size = sizeof(DWORD);
+
+        if (RegOpenKeyExW(HKEY_CURRENT_USER,
+            L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+            0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+
+            if (RegQueryValueExW(hKey, L"AppsUseLightTheme", NULL, NULL,
+                (LPBYTE)&value, &size) == ERROR_SUCCESS) {
+
+                RegCloseKey(hKey);
+                return value == 0; // 0 = dark; 1 = light
+            }
+            RegCloseKey(hKey);
+        }
+
+        HIGHCONTRAST hc;
+        hc.cbSize = sizeof(HIGHCONTRAST);
+        if (SystemParametersInfo(SPI_GETHIGHCONTRAST, sizeof(HIGHCONTRAST), &hc, 0)) {
+            return (hc.dwFlags & HCF_HIGHCONTRASTON) != 0;
+        }
+
+        return false;  // light mode is default
+    }
+    #endif
+
+    void SDLWindow::SetDarkMode(bool enable) {
+        #ifdef HX_WINDOWS
+        int darkMode = enable ? 1 : 0;
+
+        SDL_SysWMinfo wminfo;
+        SDL_VERSION(&wminfo.version);
+
+        if (SDL_GetWindowWMInfo(sdlWindow, &wminfo)) {
+            HWND hwnd = wminfo.info.win.window;
+
+            if (FAILED(DwmSetWindowAttribute(hwnd, 19, &darkMode, sizeof(darkMode)))) {
+                DwmSetWindowAttribute(hwnd, 20, &darkMode, sizeof(darkMode));
+            }
+
+            UpdateWindow(hwnd);
+        }
+        #endif
+    }
+
+    void SDLWindow::SetSystemTheme() {
+        #ifdef HX_WINDOWS
+        bool isDarkTheme = IsSystemDarkTheme();
+        SetDarkMode(isDarkTheme);
+        #endif
+    }
 
 
 	Window* CreateWindow (Application* application, int width, int height, int flags, const char* title) {

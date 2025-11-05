@@ -367,6 +367,12 @@ class NativeCFFI
 
 	@:cffi private static function lime_window_warp_mouse(handle:Dynamic, x:Int, y:Int):Void;
 
+	@:cffi private static function lime_window_set_dark_mode(handle:Dynamic, enable:Bool):Bool;
+
+	@:cffi private static function lime_window_set_system_theme(handle:Dynamic):Void;
+
+	@:cffi private static function lime_window_toggle_dark_mode(handle:Dynamic):Bool;
+
 	@:cffi private static function lime_window_event_manager_register(callback:Dynamic, eventObject:Dynamic):Void;
 
 	@:cffi private static function lime_zlib_compress(data:Dynamic, bytes:Dynamic):Dynamic;
@@ -637,6 +643,12 @@ class NativeCFFI
 		false));
 	private static var lime_window_warp_mouse = new cpp.Callable<cpp.Object->Int->Int->cpp.Object>(cpp.Prime._loadPrime("lime", "lime_window_warp_mouse",
 		"oiiv", false));
+	private static var lime_window_set_dark_mode = new cpp.Callable<cpp.Object->Bool->Bool>(cpp.Prime._loadPrime("lime", "lime_window_set_dark_mode", "obb",
+		false));
+	private static var lime_window_set_system_theme = new cpp.Callable<cpp.Object->Void>(cpp.Prime._loadPrime("lime", "lime_window_set_system_theme", "ov",
+		false));
+	private static var lime_window_toggle_dark_mode = new cpp.Callable<cpp.Object->Bool>(cpp.Prime._loadPrime("lime", "lime_window_toggle_dark_mode", "ob",
+		false));
 	private static var lime_window_event_manager_register = new cpp.Callable<cpp.Object->cpp.Object->cpp.Void>(cpp.Prime._loadPrime("lime",
 		"lime_window_event_manager_register", "oov", false));
 	private static var lime_zlib_compress = new cpp.Callable<cpp.Object->cpp.Object->cpp.Object>(cpp.Prime._loadPrime("lime", "lime_zlib_compress", "ooo",
@@ -800,6 +812,9 @@ class NativeCFFI
 	private static var lime_window_set_visible = CFFI.load("lime", "lime_window_set_visible", 2);
 	private static var lime_window_set_vsync_mode = CFFI.load("lime", "lime_window_set_vsync_mode", 2);
 	private static var lime_window_warp_mouse = CFFI.load("lime", "lime_window_warp_mouse", 3);
+	private static var lime_window_set_dark_mode = CFFI.load("lime", "lime_window_set_dark_mode", 2);
+	private static var lime_window_set_system_theme = CFFI.load("lime", "lime_window_set_system_theme", 1);
+	private static var lime_window_toggle_dark_mode = CFFI.load("lime", "lime_window_toggle_dark_mode", 1);
 	private static var lime_window_event_manager_register = CFFI.load("lime", "lime_window_event_manager_register", 2);
 	private static var lime_zlib_compress = CFFI.load("lime", "lime_zlib_compress", 2);
 	private static var lime_zlib_decompress = CFFI.load("lime", "lime_zlib_decompress", 2);
@@ -1436,6 +1451,18 @@ class NativeCFFI
 	}
 
 	@:hlNative("lime", "hl_window_warp_mouse") private static function lime_window_warp_mouse(handle:CFFIPointer, x:Int, y:Int):Void {}
+
+	@:hlNative("lime", "hl_window_set_dark_mode") private static function lime_window_set_dark_mode(handle:CFFIPointer, enable:Bool):Bool
+	{
+		return false;
+	}
+
+	@:hlNative("lime", "hl_window_set_system_theme") private static function lime_window_set_system_theme(handle:CFFIPointer):Void {}
+
+	@:hlNative("lime", "hl_window_toggle_dark_mode") private static function lime_window_toggle_dark_mode(handle:CFFIPointer):Bool
+	{
+		return false;
+	}
 
 	@:hlNative("lime", "hl_window_get_opacity") private static function lime_window_get_opacity(handle:CFFIPointer):Float { return 0.0; }
 

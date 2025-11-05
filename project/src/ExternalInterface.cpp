@@ -3985,6 +3985,82 @@ namespace lime {
 	}
 
 
+	bool lime_window_set_dark_mode (value window, bool enabled) {
+
+		#ifdef HX_WINDOWS
+		Window* targetWindow = (Window*)val_data (window);
+		targetWindow->SetDarkMode (enabled);
+		return true;
+		#else
+		return false;
+		#endif
+
+	}
+
+
+	HL_PRIM bool HL_NAME(hl_window_set_dark_mode)(HL_CFFIPointer* window, bool enable) {
+
+		#ifdef HX_WINDOWS
+		Window* targetWindow = (Window*)window->ptr;
+		targetWindow->SetDarkMode(enable);
+		return true;
+		#else
+		return false;
+		#endif
+
+	}
+
+
+	void lime_window_set_system_theme (value window) {
+
+		#ifdef HX_WINDOWS
+		Window* targetWindow = (Window*)val_data (window);
+		targetWindow->SetSystemTheme ();
+		#endif
+
+	}
+
+
+	HL_PRIM void HL_NAME(hl_window_set_system_theme)(HL_CFFIPointer* window) {
+
+		#ifdef HX_WINDOWS
+		Window* targetWindow = (Window*)window->ptr;
+		targetWindow->SetSystemTheme();
+		#endif
+
+	}
+
+
+	bool lime_window_toggle_dark_mode (value window) {
+
+		#ifdef HX_WINDOWS
+		Window* targetWindow = (Window*)val_data (window);
+		static bool currentState = false;
+		currentState = !currentState;
+		targetWindow->SetDarkMode (currentState);
+		return currentState;
+		#else
+		return false;
+		#endif
+
+	}
+
+
+	HL_PRIM bool HL_NAME(hl_window_toggle_dark_mode)(HL_CFFIPointer* window) {
+
+		#ifdef HX_WINDOWS
+		Window* targetWindow = (Window*)window->ptr;
+		static bool currentState = false;
+		currentState = !currentState;
+		targetWindow->SetDarkMode(currentState);
+		return currentState;
+		#else
+		return false;
+		#endif
+
+	}
+
+
 	value lime_zlib_compress (value buffer, value bytes) {
 
 		#ifdef LIME_ZLIB
@@ -4198,7 +4274,10 @@ namespace lime {
 	DEFINE_PRIME2 (lime_window_set_title);
 	DEFINE_PRIME2 (lime_window_set_visible);
 	DEFINE_PRIME2 (lime_window_set_vsync_mode);
+	DEFINE_PRIME2 (lime_window_set_dark_mode);
+	DEFINE_PRIME1v (lime_window_set_system_theme);
 	DEFINE_PRIME3v (lime_window_warp_mouse);
+	DEFINE_PRIME1 (lime_window_toggle_dark_mode);
 	DEFINE_PRIME1 (lime_window_get_opacity);
 	DEFINE_PRIME2v (lime_window_set_opacity);
 	DEFINE_PRIME2 (lime_zlib_compress);
@@ -4392,7 +4471,10 @@ namespace lime {
 	DEFINE_HL_PRIM (_STRING, hl_window_set_title, _TCFFIPOINTER _STRING);
 	DEFINE_HL_PRIM (_BOOL, hl_window_set_visible, _TCFFIPOINTER _BOOL);
 	DEFINE_HL_PRIM (_BOOL, hl_window_set_vsync_mode, _TCFFIPOINTER _I32);
+	DEFINE_HL_PRIM(_BOOL, hl_window_set_dark_mode, _TCFFIPOINTER _BOOL);
+	DEFINE_HL_PRIM(_VOID, hl_window_set_system_theme, _TCFFIPOINTER);
 	DEFINE_HL_PRIM (_VOID, hl_window_warp_mouse, _TCFFIPOINTER _I32 _I32);
+	DEFINE_HL_PRIM(_BOOL, hl_window_toggle_dark_mode, _TCFFIPOINTER);
 	DEFINE_HL_PRIM (_F64, hl_window_get_opacity, _TCFFIPOINTER);
 	DEFINE_HL_PRIM (_VOID, hl_window_set_opacity, _TCFFIPOINTER _F64);
 	DEFINE_HL_PRIM (_TBYTES, hl_zlib_compress, _TBYTES _TBYTES);

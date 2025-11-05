@@ -736,6 +736,42 @@ class NativeWindow
 		NativeCFFI.lime_window_warp_mouse(handle, x, y);
 		#end
 	}
+
+	public function setDarkMode(enable:Bool):Bool
+	{
+		if (handle != null)
+		{
+			#if (lime_cffi && !macro)
+			return NativeCFFI.lime_window_set_dark_mode(handle, enable);
+			#else
+			return false;
+			#end
+		}
+		return false;
+	}
+
+	public function setSystemTheme():Void
+	{
+		if (handle != null)
+		{
+			#if (lime_cffi && !macro)
+			NativeCFFI.lime_window_set_system_theme(handle);
+			#end
+		}
+	}
+
+	public function toggleDarkMode():Bool
+	{
+		if (handle != null)
+		{
+			#if (lime_cffi && !macro)
+			return NativeCFFI.lime_window_toggle_dark_mode(handle);
+			#else
+			return false;
+			#end
+		}
+		return false;
+	}
 }
 
 private enum abstract MouseCursorType(Int) from Int to Int

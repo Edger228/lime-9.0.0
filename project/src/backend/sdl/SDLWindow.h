@@ -60,6 +60,12 @@ namespace lime {
 			virtual const char* SetTitle (const char* title);
 			virtual bool SetVisible (bool visible);
 			virtual void WarpMouse (int x, int y);
+
+			#ifdef HX_WINDOWS
+			virtual void SetDarkMode(bool enable);
+			virtual void SetSystemTheme();
+			#endif
+
 			SDL_Renderer* sdlRenderer;
 			SDL_Texture* sdlTexture;
 			SDL_Window* sdlWindow;
