@@ -57,6 +57,10 @@
 #include <cstdlib>
 #include <cstring>
 
+#ifdef LIME_SDL_SOUND
+#include <media/decoders/SDL_sound.h>
+#endif
+
 DEFINE_KIND (k_finalizer);
 
 
@@ -386,6 +390,14 @@ namespace lime {
 		bytes.Set (data);
 		resource = Resource (&bytes);
 
+		#ifdef LIME_SDL_SOUND
+		if (SDL_sound::Decode (&resource, &audioBuffer)) {
+
+			return audioBuffer.Value (buffer);
+
+		}
+		#endif
+
 		if (WAV::Decode (&resource, &audioBuffer)) {
 
 			return audioBuffer.Value (buffer);
@@ -408,6 +420,14 @@ namespace lime {
 	HL_PRIM AudioBuffer* HL_NAME(hl_audio_load_bytes) (Bytes* data, AudioBuffer* buffer) {
 
 		Resource resource = Resource (data);
+
+		#ifdef LIME_SDL_SOUND
+		if (SDL_sound::Decode (&resource, buffer)) {
+
+			return buffer;
+
+		}
+		#endif
 
 		if (WAV::Decode (&resource, buffer)) {
 
@@ -436,6 +456,14 @@ namespace lime {
 
 		resource = Resource (val_string (data));
 
+		#ifdef LIME_SDL_SOUND
+		if (SDL_sound::Decode (&resource, &audioBuffer)) {
+
+			return audioBuffer.Value (buffer);
+
+		}
+		#endif
+
 		if (WAV::Decode (&resource, &audioBuffer)) {
 
 			return audioBuffer.Value (buffer);
@@ -458,6 +486,14 @@ namespace lime {
 	HL_PRIM AudioBuffer* HL_NAME(hl_audio_load_file) (hl_vstring* data, AudioBuffer* buffer) {
 
 		Resource resource = Resource (data ? hl_to_utf8 ((const uchar*)data->bytes) : NULL);
+
+		#ifdef LIME_SDL_SOUND
+		if (SDL_sound::Decode (&resource, buffer)) {
+
+			return buffer;
+
+		}
+		#endif
 
 		if (WAV::Decode (&resource, buffer)) {
 
@@ -4303,11 +4339,12 @@ namespace lime {
 	#define _TTOUCH_EVENT _OBJ (_I32 _F64 _F64 _I32 _F64 _I32 _F64 _F64)
 	#define _TVECTOR2 _OBJ (_F64 _F64)
 	#define _TVORBISFILE _OBJ (_I32 _DYN)
+	#define _TSDL_SOUNDSAMPLE _OBJ (_I32 _DYN)
 	#define _TWINDOW_EVENT _OBJ (_I32 _I32 _I32 _I32 _I32 _I32)
 
 	#define _TARRAYBUFFER _TBYTES
 	#define _TARRAYBUFFERVIEW _OBJ (_I32 _TARRAYBUFFER _I32 _I32 _I32 _I32)
-	#define _TAUDIOBUFFER _OBJ (_I32 _I32 _TARRAYBUFFERVIEW _I32 _DYN _DYN _DYN _DYN _DYN _TVORBISFILE)
+	#define _TAUDIOBUFFER _OBJ (_I32 _I32 _TARRAYBUFFERVIEW _I32 _I32 _DYN _DYN _DYN _DYN _DYN _TVORBISFILE _TSDL_SOUNDSAMPLE)
 	#define _TIMAGEBUFFER _OBJ (_I32 _TARRAYBUFFERVIEW _I32 _I32 _BOOL _BOOL _I32 _DYN _DYN _DYN _DYN _DYN _DYN)
 	#define _TIMAGE _OBJ (_TIMAGEBUFFER _BOOL _I32 _I32 _I32 _TRECTANGLE _ENUM _I32 _I32 _F64 _F64)
 
@@ -4520,6 +4557,12 @@ extern "C" int lime_vorbis_register_prims ();
 extern "C" int lime_vorbis_register_prims () { return 0; }
 #endif
 
+#ifdef LIME_SDL_SOUND
+extern "C" int lime_sdl_sound_register_prims ();
+#else
+extern "C" int lime_sdl_sound_register_prims () { return 0; }
+#endif
+
 
 extern "C" int lime_register_prims () {
 
@@ -4529,6 +4572,7 @@ extern "C" int lime_register_prims () {
 	lime_openal_register_prims ();
 	lime_opengl_register_prims ();
 	lime_vorbis_register_prims ();
+	lime_sdl_sound_register_prims ();
 
 	return 0;
 

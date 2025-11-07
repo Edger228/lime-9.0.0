@@ -539,6 +539,10 @@ if (BUILD_FRAMEWORK)
   )
 endif ()
 
+if(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+    add_compile_definitions(generic=ft_generic)
+endif()
+
 # 'freetype-interface' is an interface library, to be accessed with
 # `EXPORT_NAME Freetype::Freetype`.  This is the target name provided by
 # CMake's `FindFreetype.cmake`, so we provide it for compatibility.

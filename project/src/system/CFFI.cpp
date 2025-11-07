@@ -51,8 +51,15 @@ HL_API vbyte *hl_field_name( int hash ) { return NULL; }
 
 HL_API void hl_error_msg( const uchar *msg, ... ) {}
 HL_API void hl_assert( void ) {}
+
+#ifdef HX_WINRT
+HL_API void hl_throw( vdynamic *v ) { }
+HL_API void hl_rethrow( vdynamic *v ) { }
+#else
 HL_API void hl_throw( vdynamic *v ) { throw ""; }
 HL_API void hl_rethrow( vdynamic *v ) { throw ""; }
+#endif
+
 HL_API void hl_setup_longjump( void *j ) {}
 HL_API void hl_setup_exception( void *resolve_symbol, void *capture_stack ) {}
 HL_API void hl_dump_stack( void ) {}
