@@ -61,6 +61,8 @@
 		<tag value="${NATIVE_TOOLKIT_OPTIM_TAG}" if="NATIVE_TOOLKIT_OPTIM_TAG" />
 		<depend files="native-toolkit-freetype-depends" />
 
+		<compilerflag value="-Dgeneric=ft_generic" if="winrt" />
+
 		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/custom/freetype/include" />
 		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/freetype/include" />
 		<compilerflag value="-DFT2_BUILD_LIBRARY" />

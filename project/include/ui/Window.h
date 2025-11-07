@@ -74,8 +74,10 @@ namespace lime {
 			virtual bool SetVisible (bool visible) = 0;
 			virtual void WarpMouse (int x, int y) = 0;
 
+			#ifdef HX_WINDOWS
 			virtual void SetDarkMode (bool enable) = 0;
 			virtual void SetSystemTheme () = 0;
+			#endif
 
 			Application* currentApplication;
 			int flags;

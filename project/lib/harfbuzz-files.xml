@@ -20,8 +20,8 @@
 		<compilerflag value="-D_CRT_SECURE_NO_WARNINGS" if="windows" />
 		<compilerflag value="-D_CRT_NONSTDC_NO_WARNINGS" if="windows" />
 
-		<compilerflag value="-DHAVE_CORETEXT" if="mac || ios" />
-		<compilerflag value="-Wno-undefined-bool-conversion" if="mac" />
+		<compilerflag value="-DHAVE_CORETEXT" if="mac || ios" unless="windows"/>
+		<compilerflag value="-Wno-undefined-bool-conversion" if="mac" unless="windows"/>
 
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-aat-layout.cc" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-aat-map.cc" />
@@ -30,8 +30,10 @@
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-buffer-verify.cc" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-buffer.cc" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-common.cc" />
-		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-coretext-shape.cc" if="mac || ios" />
-		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-directwrite.cc" if="windows HXCPP_M64" />
+		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-coretext-shape.cc" if="mac || ios" unless="windows"/>
+		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-directwrite.cc" if="windows" />
+		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-directwrite-font.cc" if="windows" />
+		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-directwrite-shape.cc" if="windows" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-draw.cc" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-face.cc" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-face-builder.cc" />
@@ -67,6 +69,7 @@
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-ot-var.cc" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-outline.cc" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-paint.cc" />
+		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-paint-bounded.cc" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-paint-extents.cc" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-set.cc" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-shape-plan.cc" />
@@ -77,6 +80,7 @@
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-unicode.cc" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-uniscribe.cc" if="windows" />
 
+		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/OT/Var/VARC/VARC.cc" />
 	</files>
 
 </xml>

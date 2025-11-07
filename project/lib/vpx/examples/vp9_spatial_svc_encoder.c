@@ -16,6 +16,7 @@
 
 #include <math.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -32,6 +33,7 @@
 #include "vp9/encoder/vp9_encoder.h"
 #include "./y4minput.h"
 
+#define OUTPUT_FRAME_STATS 0
 #define OUTPUT_RC_STATS 1
 
 #define SIMULCAST_MODE 0
@@ -222,6 +224,10 @@ static void parse_command_line(int argc, const char **argv_,
 
   // process command line options
   argv = argv_dup(argc - 1, argv_ + 1);
+  if (!argv) {
+    fprintf(stderr, "Error allocating argument list\n");
+    exit(EXIT_FAILURE);
+  }
   for (argi = argj = argv; (*argj = *argi); argi += arg.argv_step) {
     arg.argv_step = 1;
 
@@ -311,7 +317,6 @@ static void parse_command_line(int argc, const char **argv_,
           break;
         default:
           die("Error: Invalid bit depth selected (%d)\n", enc_cfg->g_bit_depth);
-          break;
       }
 #endif  // CONFIG_VP9_HIGHBITDEPTH
     } else if (arg_match(&arg, &dropframe_thresh_arg, argi)) {
@@ -357,6 +362,8 @@ static void parse_command_line(int argc, const char **argv_,
   if (app_input->input_ctx.file_type == FILE_TYPE_Y4M) {
     enc_cfg->g_w = app_input->input_ctx.width;
     enc_cfg->g_h = app_input->input_ctx.height;
+    enc_cfg->g_timebase.den = app_input->input_ctx.framerate.numerator;
+    enc_cfg->g_timebase.num = app_input->input_ctx.framerate.denominator;
   }
 
   if (enc_cfg->g_w < 16 || enc_cfg->g_w % 2 || enc_cfg->g_h < 16 ||
@@ -579,7 +586,8 @@ static void set_frame_flags_bypass_mode_ex0(
       ref_frame_config->alt_fb_idx[sl] = 0;
     } else if (tl == 1) {
       ref_frame_config->lst_fb_idx[sl] = sl;
-      ref_frame_config->gld_fb_idx[sl] = num_spatial_layers + sl - 1;
+      ref_frame_config->gld_fb_idx[sl] =
+          (sl == 0) ? 0 : num_spatial_layers + sl - 1;
       ref_frame_config->alt_fb_idx[sl] = num_spatial_layers + sl;
     }
     // Set the reference and update flags.
@@ -873,7 +881,9 @@ int main(int argc, const char **argv) {
   int pts = 0;            /* PTS starts at 0 */
   int frame_duration = 1; /* 1 timebase tick per frame */
   int end_of_stream = 0;
+#if OUTPUT_FRAME_STATS
   int frames_received = 0;
+#endif
 #if OUTPUT_RC_STATS
   VpxVideoWriter *outfile[VPX_SS_MAX_LAYERS] = { NULL };
   struct RateControlStats rc;
@@ -1119,14 +1129,14 @@ int main(int argc, const char **argv) {
             }
 #endif
           }
-          /*
+#if OUTPUT_FRAME_STATS
           printf("SVC frame: %d, kf: %d, size: %d, pts: %d\n", frames_received,
                  !!(cx_pkt->data.frame.flags & VPX_FRAME_IS_KEY),
                  (int)cx_pkt->data.frame.sz, (int)cx_pkt->data.frame.pts);
-          */
+          ++frames_received;
+#endif
           if (enc_cfg.ss_number_layers == 1 && enc_cfg.ts_number_layers == 1)
             si->bytes_sum[0] += (int)cx_pkt->data.frame.sz;
-          ++frames_received;
 #if CONFIG_VP9_DECODER && !SIMULCAST_MODE
           if (vpx_codec_decode(&decoder, cx_pkt->data.frame.buf,
                                (unsigned int)cx_pkt->data.frame.sz, NULL, 0))
@@ -1139,18 +1149,21 @@ int main(int argc, const char **argv) {
                       cx_pkt->data.twopass_stats.sz);
           break;
         }
-        default: { break; }
+        default: {
+          break;
+        }
       }
 
 #if CONFIG_VP9_DECODER && !SIMULCAST_MODE
       vpx_codec_control(&encoder, VP9E_GET_SVC_LAYER_ID, &layer_id);
       // Don't look for mismatch on top spatial and top temporal layers as they
-      // are non reference frames.
+      // are non reference frames. Don't look at frames whose top spatial layer
+      // is dropped.
       if ((enc_cfg.ss_number_layers > 1 || enc_cfg.ts_number_layers > 1) &&
+          cx_pkt->data.frame
+              .spatial_layer_encoded[enc_cfg.ss_number_layers - 1] &&
           !(layer_id.temporal_layer_id > 0 &&
-            layer_id.temporal_layer_id == (int)enc_cfg.ts_number_layers - 1 &&
-            cx_pkt->data.frame
-                .spatial_layer_encoded[enc_cfg.ss_number_layers - 1])) {
+            layer_id.temporal_layer_id == (int)enc_cfg.ts_number_layers - 1)) {
         test_decode(&encoder, &decoder, frame_cnt, &mismatch_seen);
       }
 #endif

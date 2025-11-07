@@ -5,6 +5,10 @@
 #include <thread>
 #include <cmath>
 
+#ifdef LIME_SDL_SOUND
+#include "SDL_sound.h"
+#endif
+
 #ifdef HX_MACOS
 #include <CoreFoundation/CoreFoundation.h>
 #endif
@@ -51,6 +55,10 @@ namespace lime {
 		}
 		performanceFrequency = (double)SDL_GetPerformanceFrequency();
 		performanceCounter = (double)SDL_GetPerformanceCounter();
+
+		#ifdef LIME_SDL_SOUND
+		Sound_Init ();
+		#endif
 
 		SDL_LogSetPriority (SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_WARN);
 
@@ -885,6 +893,10 @@ namespace lime {
 	int SDLApplication::Quit () {
 		applicationEvent.type = EXIT;
 		ApplicationEvent::Dispatch (&applicationEvent);
+
+		#ifdef LIME_SDL_SOUND
+		Sound_Quit ();
+		#endif
 
 		SDL_Quit ();
 		return 0;

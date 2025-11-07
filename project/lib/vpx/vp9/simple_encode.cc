@@ -8,8 +8,12 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <memory>
 #include <vector>
+
 #include "./ivfenc.h"
 #include "vp9/common/vp9_entropymode.h"
 #include "vp9/common/vp9_enums.h"
@@ -110,6 +114,7 @@ static VP9_COMP *init_encoder(const VP9EncoderConfig *oxcf,
                               vpx_img_fmt_t img_fmt) {
   VP9_COMP *cpi;
   BufferPool *buffer_pool = (BufferPool *)vpx_calloc(1, sizeof(*buffer_pool));
+  if (!buffer_pool) return NULL;
   vp9_initialize_enc();
   cpi = vp9_create_compressor(oxcf, buffer_pool);
   vp9_update_compressor_with_img_fmt(cpi, img_fmt);
@@ -142,7 +147,6 @@ get_frame_type_from_update_type(FRAME_UPDATE_TYPE update_type) {
     default:
       fprintf(stderr, "Unsupported update_type %d\n", update_type);
       abort();
-      return kFrameTypeInter;
   }
 }
 
@@ -182,10 +186,11 @@ static void update_motion_vector_info(
     const MV_REFERENCE_FRAME *in_ref_frame =
         input_motion_vector_info[i].ref_frame;
     output_motion_vector_info[i].mv_count =
-        (in_ref_frame[0] == INTRA_FRAME) ? 0
-                                         : ((in_ref_frame[1] == NONE) ? 1 : 2);
-    if (in_ref_frame[0] == NONE) {
-      fprintf(stderr, "in_ref_frame[0] shouldn't be NONE\n");
+        (in_ref_frame[0] == INTRA_FRAME)
+            ? 0
+            : ((in_ref_frame[1] == NO_REF_FRAME) ? 1 : 2);
+    if (in_ref_frame[0] == NO_REF_FRAME) {
+      fprintf(stderr, "in_ref_frame[0] shouldn't be NO_REF_FRAME\n");
       abort();
     }
     output_motion_vector_info[i].ref_frame[0] =
@@ -497,6 +502,7 @@ static bool init_encode_frame_result(EncodeFrameResult *encode_frame_result,
 
   encode_frame_result->coding_data.reset(
       new (std::nothrow) uint8_t[max_coding_data_byte_size]);
+  encode_frame_result->max_coding_data_byte_size = max_coding_data_byte_size;
 
   encode_frame_result->num_rows_4x4 = get_num_unit_4x4(frame_height);
   encode_frame_result->num_cols_4x4 = get_num_unit_4x4(frame_width);
@@ -507,6 +513,7 @@ static bool init_encode_frame_result(EncodeFrameResult *encode_frame_result,
   encode_frame_result->tpl_stats_info.resize(MAX_LAG_BUFFERS);
 
   if (encode_frame_result->coding_data.get() == nullptr) {
+    encode_frame_result->max_coding_data_byte_size = 0;
     return false;
   }
   return init_image_buffer(&encode_frame_result->coded_frame, frame_width,
@@ -743,10 +750,12 @@ static void UpdateGroupOfPicture(const VP9_COMP *cpi, int start_coding_index,
 }
 
 #define SET_STRUCT_VALUE(config, structure, ret, field) \
-  if (strcmp(config.name, #field) == 0) {               \
-    structure->field = atoi(config.value);              \
-    ret = 1;                                            \
-  }
+  do {                                                  \
+    if (strcmp(config.name, #field) == 0) {             \
+      structure->field = atoi(config.value);            \
+      ret = 1;                                          \
+    }                                                   \
+  } while (false)
 
 static void UpdateEncodeConfig(const EncodeConfig &config,
                                VP9EncoderConfig *oxcf) {
@@ -782,11 +791,12 @@ static void UpdateEncodeConfig(const EncodeConfig &config,
 
 static VP9EncoderConfig GetEncodeConfig(
     int frame_width, int frame_height, vpx_rational_t frame_rate,
-    int target_bitrate, int encode_speed, vpx_enc_pass enc_pass,
+    int target_bitrate, int encode_speed, int target_level,
+    vpx_enc_pass enc_pass,
     const std::vector<EncodeConfig> &encode_config_list) {
-  VP9EncoderConfig oxcf =
-      vp9_get_encoder_config(frame_width, frame_height, frame_rate,
-                             target_bitrate, encode_speed, enc_pass);
+  VP9EncoderConfig oxcf = vp9_get_encoder_config(
+      frame_width, frame_height, frame_rate, target_bitrate, encode_speed,
+      target_level, enc_pass);
   for (const auto &config : encode_config_list) {
     UpdateEncodeConfig(config, &oxcf);
   }
@@ -799,7 +809,7 @@ static VP9EncoderConfig GetEncodeConfig(
 
 SimpleEncode::SimpleEncode(int frame_width, int frame_height,
                            int frame_rate_num, int frame_rate_den,
-                           int target_bitrate, int num_frames,
+                           int target_bitrate, int num_frames, int target_level,
                            const char *infile_path, const char *outfile_path) {
   impl_ptr_ = std::unique_ptr<EncodeImpl>(new EncodeImpl());
   frame_width_ = frame_width;
@@ -809,6 +819,7 @@ SimpleEncode::SimpleEncode(int frame_width, int frame_height,
   target_bitrate_ = target_bitrate;
   num_frames_ = num_frames;
   encode_speed_ = 0;
+  target_level_ = target_level;
 
   frame_coding_index_ = 0;
   show_frame_count_ = 0;
@@ -860,9 +871,9 @@ StatusCode SimpleEncode::DumpEncodeConfigs(int pass, FILE *fp) {
   }
   const vpx_rational_t frame_rate =
       make_vpx_rational(frame_rate_num_, frame_rate_den_);
-  const VP9EncoderConfig oxcf =
-      GetEncodeConfig(frame_width_, frame_height_, frame_rate, target_bitrate_,
-                      encode_speed_, enc_pass, impl_ptr_->encode_config_list);
+  const VP9EncoderConfig oxcf = GetEncodeConfig(
+      frame_width_, frame_height_, frame_rate, target_bitrate_, encode_speed_,
+      target_level_, enc_pass, impl_ptr_->encode_config_list);
   vp9_dump_encoder_config(&oxcf, fp);
   return StatusOk;
 }
@@ -872,7 +883,7 @@ void SimpleEncode::ComputeFirstPassStats() {
       make_vpx_rational(frame_rate_num_, frame_rate_den_);
   const VP9EncoderConfig oxcf = GetEncodeConfig(
       frame_width_, frame_height_, frame_rate, target_bitrate_, encode_speed_,
-      VPX_RC_FIRST_PASS, impl_ptr_->encode_config_list);
+      target_level_, VPX_RC_FIRST_PASS, impl_ptr_->encode_config_list);
   impl_ptr_->cpi = init_encoder(&oxcf, impl_ptr_->img_fmt);
   struct lookahead_ctx *lookahead = impl_ptr_->cpi->lookahead;
   int i;
@@ -883,6 +894,10 @@ void SimpleEncode::ComputeFirstPassStats() {
   use_highbitdepth = impl_ptr_->cpi->common.use_highbitdepth;
 #endif
   vpx_image_t img;
+  if (impl_ptr_->img_fmt == VPX_IMG_FMT_NV12) {
+    fprintf(stderr, "VPX_IMG_FMT_NV12 is not supported\n");
+    abort();
+  }
   vpx_img_alloc(&img, impl_ptr_->img_fmt, frame_width_, frame_height_, 1);
   rewind(in_file_);
   impl_ptr_->first_pass_stats.clear();
@@ -906,7 +921,7 @@ void SimpleEncode::ComputeFirstPassStats() {
         ENCODE_FRAME_RESULT encode_frame_info;
         vp9_init_encode_frame_result(&encode_frame_info);
         // TODO(angiebird): Call vp9_first_pass directly
-        vp9_get_compressed_data(impl_ptr_->cpi, &frame_flags, &size, nullptr,
+        vp9_get_compressed_data(impl_ptr_->cpi, &frame_flags, &size, nullptr, 0,
                                 &time_stamp, &time_end, flush,
                                 &encode_frame_info);
         // vp9_get_compressed_data only generates first pass stats not
@@ -1038,7 +1053,7 @@ void SimpleEncode::StartEncode() {
       make_vpx_rational(frame_rate_num_, frame_rate_den_);
   VP9EncoderConfig oxcf = GetEncodeConfig(
       frame_width_, frame_height_, frame_rate, target_bitrate_, encode_speed_,
-      VPX_RC_LAST_PASS, impl_ptr_->encode_config_list);
+      target_level_, VPX_RC_LAST_PASS, impl_ptr_->encode_config_list);
 
   vpx_fixed_buf_t stats;
   stats.buf = GetVectorData(impl_ptr_->first_pass_stats);
@@ -1048,6 +1063,10 @@ void SimpleEncode::StartEncode() {
   vp9_set_first_pass_stats(&oxcf, &stats);
   assert(impl_ptr_->cpi == nullptr);
   impl_ptr_->cpi = init_encoder(&oxcf, impl_ptr_->img_fmt);
+  if (impl_ptr_->img_fmt == VPX_IMG_FMT_NV12) {
+    fprintf(stderr, "VPX_IMG_FMT_NV12 is not supported\n");
+    abort();
+  }
   vpx_img_alloc(&impl_ptr_->tmp_img, impl_ptr_->img_fmt, frame_width_,
                 frame_height_, 1);
 
@@ -1188,8 +1207,9 @@ void SimpleEncode::EncodeFrame(EncodeFrameResult *encode_frame_result) {
                                 &encode_frame_info.coded_frame);
     vp9_get_compressed_data(cpi, &frame_flags,
                             &encode_frame_result->coding_data_byte_size,
-                            encode_frame_result->coding_data.get(), &time_stamp,
-                            &time_end, flush, &encode_frame_info);
+                            encode_frame_result->coding_data.get(),
+                            encode_frame_result->max_coding_data_byte_size,
+                            &time_stamp, &time_end, flush, &encode_frame_info);
     if (out_file_ != nullptr) {
       ivf_write_frame_header(out_file_, time_stamp,
                              encode_frame_result->coding_data_byte_size);
@@ -1203,10 +1223,8 @@ void SimpleEncode::EncodeFrame(EncodeFrameResult *encode_frame_result) {
       fprintf(stderr, "Coding data size <= 0\n");
       abort();
     }
-    const size_t max_coding_data_byte_size =
-        get_max_coding_data_byte_size(frame_width_, frame_height_);
     if (encode_frame_result->coding_data_byte_size >
-        max_coding_data_byte_size) {
+        encode_frame_result->max_coding_data_byte_size) {
       fprintf(stderr, "Coding data size exceeds the maximum.\n");
       abort();
     }
@@ -1266,7 +1284,7 @@ int SimpleEncode::GetCodingFrameNum() const {
       make_vpx_rational(frame_rate_num_, frame_rate_den_);
   const VP9EncoderConfig oxcf = GetEncodeConfig(
       frame_width_, frame_height_, frame_rate, target_bitrate_, encode_speed_,
-      VPX_RC_LAST_PASS, impl_ptr_->encode_config_list);
+      target_level_, VPX_RC_LAST_PASS, impl_ptr_->encode_config_list);
   FRAME_INFO frame_info = vp9_get_frame_info(&oxcf);
   fps_init_first_pass_info(&twopass.first_pass_info,
                            GetVectorData(impl_ptr_->first_pass_stats),
@@ -1285,7 +1303,7 @@ std::vector<int> SimpleEncode::ComputeKeyFrameMap() const {
       make_vpx_rational(frame_rate_num_, frame_rate_den_);
   const VP9EncoderConfig oxcf = GetEncodeConfig(
       frame_width_, frame_height_, frame_rate, target_bitrate_, encode_speed_,
-      VPX_RC_LAST_PASS, impl_ptr_->encode_config_list);
+      target_level_, VPX_RC_LAST_PASS, impl_ptr_->encode_config_list);
   TWO_PASS twopass;
   fps_init_first_pass_info(&twopass.first_pass_info,
                            GetVectorData(impl_ptr_->first_pass_stats),

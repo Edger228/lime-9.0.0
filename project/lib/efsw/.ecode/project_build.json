@@ -31,7 +31,16 @@
         "preset": "generic",
         "relative_file_paths": true
       }
-    }
+    },
+    "run": [
+      {
+        "args": "",
+        "command": "efsw-test-debug",
+        "name": "efsw-test-debug",
+        "run_in_terminal": true,
+        "working_dir": "${project_root}/bin"
+      }
+    ]
   },
   "linux-release": {
     "build": [
@@ -104,7 +113,7 @@
   "macos-debug": {
     "build": [
       {
-        "args": "--thread-sanitizer --verbose gmake2",
+        "args": "--verbose gmake2",
         "command": "premake5",
         "working_dir": ""
       },
@@ -117,8 +126,8 @@
     "build_types": [],
     "clean": [
       {
-        "args": "",
-        "command": "",
+        "args": "-C make/macosx clean",
+        "command": "make",
         "working_dir": ""
       }
     ],
@@ -133,7 +142,16 @@
         "preset": "generic",
         "relative_file_paths": true
       }
-    }
+    },
+    "run": [
+      {
+        "args": "",
+        "command": "efsw-test-debug",
+        "name": "efsw-test",
+        "run_in_terminal": true,
+        "working_dir": "${project_root}/bin"
+      }
+    ]
   },
   "macos-release": {
     "build": [

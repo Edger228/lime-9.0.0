@@ -15,7 +15,7 @@
         <depend name="${NATIVE_TOOLKIT_PATH}/custom/sdl/include/SDL_config_macosx.h" />
         <depend name="${NATIVE_TOOLKIT_PATH}/sdl/include/SDL_config_minimal.h" />
         <depend name="${NATIVE_TOOLKIT_PATH}/sdl/include/SDL_config_pandora.h" />
-        <depend name="${NATIVE_TOOLKIT_PATH}/custom/sdl/include/SDL_config_windows.h" unless="winrt" />
+        <depend name="${NATIVE_TOOLKIT_PATH}/custom/sdl/include/SDL_config_windows.h" />
         <depend name="${NATIVE_TOOLKIT_PATH}/sdl/include/SDL_config_winrt.h" />
         <depend name="${NATIVE_TOOLKIT_PATH}/sdl/include/SDL_copying.h" />
         <depend name="${NATIVE_TOOLKIT_PATH}/sdl/include/SDL_cpuinfo.h" />
@@ -164,7 +164,7 @@
 
             </section>
 
-        <section if="mac">
+        <section if="mac" unless="windows">
 
             <compilerflag value="-DTARGET_API_MAC_CARBON" />
             <compilerflag value="-DTARGET_API_MAC_OSX" />
@@ -541,7 +541,7 @@
 
         </section>
 
-        <section if="mac">
+        <section if="mac" unless="windows">
 
             <compilerflag value="-fobjc-arc" />
             <file name="${NATIVE_TOOLKIT_PATH}/sdl/src/audio/coreaudio/SDL_coreaudio.m" />

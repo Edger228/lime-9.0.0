@@ -55,7 +55,7 @@
 
 		</section>
 
-		<section if="mac">
+		<section if="mac unless="windows"">
 
 			<vflag name="-l" value="iconv"/>
 			<vflag name="-framework" value="IOKit" />
