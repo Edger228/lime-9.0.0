@@ -5,6 +5,11 @@
 		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/freetype/include" if="NATIVE_TOOLKIT_HAVE_FREETYPE" />
 		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/harfbuzz/src/" />
 
+		<compilerflag value="-DTARGET_OS_IPHONE=0" unless="mac || ios" />
+		<compilerflag value="-DTARGET_OS_MAC=0" unless="mac || ios" />
+
+		<compilerflag value="-DHB_NO_CORETEXT" unless="mac || ios"/>
+
 		<compilerflag value="-DHAVE_FREETYPE" if="NATIVE_TOOLKIT_HAVE_FREETYPE" />
 		<compilerflag value="-DHAVE_OT" />
 		<compilerflag value="-DHAVE_FALLBACK" />
@@ -20,8 +25,8 @@
 		<compilerflag value="-D_CRT_SECURE_NO_WARNINGS" if="windows" />
 		<compilerflag value="-D_CRT_NONSTDC_NO_WARNINGS" if="windows" />
 
-		<compilerflag value="-DHAVE_CORETEXT" if="mac || ios" unless="windows"/>
-		<compilerflag value="-Wno-undefined-bool-conversion" if="mac" unless="windows"/>
+		<compilerflag value="-DHAVE_CORETEXT" if="mac || ios" unless="android"/>
+		<compilerflag value="-Wno-undefined-bool-conversion" if="mac" unless="android"/>
 
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-aat-layout.cc" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-aat-map.cc" />
@@ -30,7 +35,7 @@
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-buffer-verify.cc" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-buffer.cc" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-common.cc" />
-		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-coretext-shape.cc" if="mac || ios" unless="windows"/>
+		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-coretext-shape.cc" if="mac || ios" unless="windows || android"/>
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-directwrite.cc" if="windows" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-directwrite-font.cc" if="windows" />
 		<file name="${NATIVE_TOOLKIT_PATH}/harfbuzz/src/hb-directwrite-shape.cc" if="windows" />

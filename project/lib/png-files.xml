@@ -15,14 +15,12 @@
 
 		<depend files="native-toolkit-png-depends" />
 
-		<section unless="winrt">
-			<depend name="${NATIVE_TOOLKIT_PATH}/png/pngconf.h" />
-			<depend name="${NATIVE_TOOLKIT_PATH}/png/pngdebug.h" />
-			<depend name="${NATIVE_TOOLKIT_PATH}/png/pnginfo.h" />
-			<depend name="${NATIVE_TOOLKIT_PATH}/custom/png/pnglibconf.h" />
-			<depend name="${NATIVE_TOOLKIT_PATH}/png/pngpriv.h" />
-			<depend name="${NATIVE_TOOLKIT_PATH}/png/pngstruct.h" />
-		</section>
+		<depend name="${NATIVE_TOOLKIT_PATH}/png/pngconf.h" />
+		<depend name="${NATIVE_TOOLKIT_PATH}/png/pngdebug.h" />
+		<depend name="${NATIVE_TOOLKIT_PATH}/png/pnginfo.h" />
+		<depend name="${NATIVE_TOOLKIT_PATH}/custom/png/pnglibconf.h" />
+		<depend name="${NATIVE_TOOLKIT_PATH}/png/pngpriv.h" />
+		<depend name="${NATIVE_TOOLKIT_PATH}/png/pngstruct.h" />
 
 		<file name="${NATIVE_TOOLKIT_PATH}/png/png.c" />
 		<file name="${NATIVE_TOOLKIT_PATH}/png/pngerror.c" />

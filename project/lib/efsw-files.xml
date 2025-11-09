@@ -22,11 +22,11 @@
 		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/FileSystem.cpp" />
 		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/FileWatcher.cpp" />
 		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/FileWatcherCWrapper.cpp" />
-		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/FileWatcherFSEvents.cpp" if="mac" unless="windows"/>
+		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/FileWatcherFSEvents.cpp" if="mac" unless="android"/>
 		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/FileWatcherGeneric.cpp" />
 		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/FileWatcherImpl.cpp" />
 		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/FileWatcherInotify.cpp" if="linux" />
-		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/FileWatcherKqueue.cpp" if="mac" unless="windows"/>
+		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/FileWatcherKqueue.cpp" if="mac" unless="android"/>
 		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/FileWatcherWin32.cpp" if="windows" />
 		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/Log.cpp" />
 		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/platform/posix/FileSystemImpl.cpp" unless="windows" />
@@ -36,10 +36,10 @@
 		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/String.cpp" />
 		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/System.cpp" />
 		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/Watcher.cpp" />
-		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/WatcherFSEvents.cpp" if="mac" unless="windows"/>
+		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/WatcherFSEvents.cpp" if="mac" unless="android"/>
 		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/WatcherGeneric.cpp" />
 		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/WatcherInotify.cpp" if="linux" />
-		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/WatcherKqueue.cpp" if="mac" unless="windows"/>
+		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/WatcherKqueue.cpp" if="mac" unless="android"/>
 		<file name="${NATIVE_TOOLKIT_PATH}/efsw/src/efsw/WatcherWin32.cpp" if="windows" />
 
 	</files>

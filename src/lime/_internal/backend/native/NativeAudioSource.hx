@@ -296,7 +296,7 @@ class NativeAudioSource
 		#end
 	}
 
-		private function readSDLSoundSampleBuffer(soundSample:SDLSoundSample, ?length:Int):UInt8Array
+	private function readSDLSoundSampleBuffer(soundSample:SDLSoundSample, ?length:Int):UInt8Array
 	{
 		#if lime_sdlsound
 		if (length == null)

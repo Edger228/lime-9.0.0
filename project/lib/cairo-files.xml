@@ -6,7 +6,7 @@
 		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/custom/cairo/configs/default/" unless="windows || mac || linux" />
 		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/custom/cairo/configs/linux/" if="linux" />
 		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/custom/cairo/configs/windows/" if="windows" />
-		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/custom/cairo/configs/mac/" if="mac" unless="windows"/>
+		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/custom/cairo/configs/mac/" if="mac" unless="android"/>
 		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/cairo/src/" />
 
 		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/custom/freetype/include/" />

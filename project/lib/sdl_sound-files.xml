@@ -2,7 +2,7 @@
 
     <set name="SDLSOUND_DECODER_MODPLUG" value="1" />
     <set name="SDLSOUND_DECODER_MIDI" value="1" />
-    <set name="SDLSOUND_DECODER_COREAUDIO" value="1" if="mac || ios || tvos" />
+    <set name="SDLSOUND_DECODER_COREAUDIO" value="1" if="mac || ios || tvos" unless="android"/>
 
     <files id="native-toolkit-sdl_sound-depends">
 
@@ -92,7 +92,7 @@
 
             </section>
 
-        <section if="mac">
+        <section if="mac" unless="android">
 
             <compilerflag value="-DTARGET_API_MAC_CARBON" />
             <compilerflag value="-DTARGET_API_MAC_OSX" />

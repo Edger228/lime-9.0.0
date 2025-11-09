@@ -571,8 +571,8 @@ class AssetHelper
 					}
 					else
 					{
-						// TODO: Make this assumption elsewhere?
-
+						// assumption: if all assets in the manifest have className (are embedded)
+						// then we can embed the manifest too
 						var allEmbedded = true;
 
 						for (childAsset in manifest.assets)
@@ -627,11 +627,17 @@ class AssetHelper
 
 			if (isPackedLibrary(project, library))
 			{
-				// TODO
-				#if !nodejs
-				if (type == "zip") type = "deflate";
-
-				// TODO: Support library.embed=true by embedding all the assets instead of packing
+				if (library.embed == true)
+				{
+					for (asset in project.assets)
+					{
+						if (asset.library == library.name)
+						{
+							asset.embed = true;
+						}
+					}
+					continue;
+				}
 
 				cacheAvailable = false;
 				cacheDirectory = null;
@@ -643,45 +649,99 @@ class AssetHelper
 					cacheDirectory = targetDirectory + "/obj/libraries/";
 					filename = library.name + ".pak";
 
-					// TODO: Support caching
-
 					System.mkdir(cacheDirectory);
 
-					if (FileSystem.exists(cacheDirectory + filename))
-					{
-						FileSystem.deleteFile(cacheDirectory + filename);
-					}
+					var cacheFile = cacheDirectory + filename;
+					var needsRebuild = !FileSystem.exists(cacheFile);
 
-					output = File.write(cacheDirectory + filename, true);
-					position = 0;
-
-					try
+					if (!needsRebuild)
 					{
-						var assetData;
+						var cacheTime = FileSystem.stat(cacheFile).mtime;
 
 						for (asset in project.assets)
 						{
-							assetData = getPackedAssetData(project, output, pathGroups, libraries, library, asset);
-
-							if (assetData != null)
+							if (asset.library == library.name && asset.sourcePath != "" && FileSystem.exists(asset.sourcePath))
 							{
-								manifest.assets.push(assetData);
+								if (FileSystem.stat(asset.sourcePath).mtime.getTime() > cacheTime.getTime())
+								{
+									needsRebuild = true;
+									break;
+								}
 							}
 						}
 					}
-					catch (e:Dynamic)
-					{
-						output.close();
-						FileSystem.deleteFile(cacheDirectory + filename);
 
-						#if neko
-						neko.Lib.rethrow(e);
-						#end
+					if (needsRebuild)
+					{
+						if (FileSystem.exists(cacheFile))
+						{
+							FileSystem.deleteFile(cacheFile);
+						}
+
+						output = File.write(cacheFile, true);
+						position = 0;
+
+						try
+						{
+							var assetData;
+
+							for (asset in project.assets)
+							{
+								assetData = getPackedAssetData(project, output, pathGroups, libraries, library, asset);
+
+								if (assetData != null)
+								{
+									manifest.assets.push(assetData);
+								}
+							}
+						}
+						catch (e:Dynamic)
+						{
+							output.close();
+							if (FileSystem.exists(cacheFile))
+							{
+								FileSystem.deleteFile(cacheFile);
+							}
+
+							#if neko
+							neko.Lib.rethrow(e);
+							#else
+							throw e;
+							#end
+						}
+
+						output.close();
+					}
+					else
+					{
+						var manifestFile = cacheDirectory + library.name + "_manifest.json";
+						if (FileSystem.exists(manifestFile))
+						{
+							try
+							{
+								var manifestContent = File.getContent(manifestFile);
+								manifest = Unserializer.run(manifestContent);
+							}
+							catch (e:Dynamic)
+							{
+								if (FileSystem.exists(cacheFile))
+								{
+									FileSystem.deleteFile(cacheFile);
+								}
+								continue;
+							}
+						}
+						else
+						{
+							if (FileSystem.exists(cacheFile))
+							{
+								FileSystem.deleteFile(cacheFile);
+							}
+							continue;
+						}
 					}
 
-					output.close();
-
-					var libraryAsset = new Asset(cacheDirectory + filename, "lib/" + filename, AssetType.BINARY);
+					var libraryAsset = new Asset(cacheFile, "lib/" + filename, AssetType.BINARY);
 					libraryAsset.library = library.name;
 					project.assets.push(libraryAsset);
 
@@ -695,13 +755,15 @@ class AssetHelper
 
 					project.assets.push(data);
 					embeddedLibrary = true;
+
+					var manifestFile = cacheDirectory + library.name + "_manifest.json";
+					File.saveContent(manifestFile, Serializer.run(manifest));
 				}
 
 				if (library.name == DEFAULT_LIBRARY_NAME)
 				{
 					library.preload = true;
 				}
-				#end
 			}
 		}
 

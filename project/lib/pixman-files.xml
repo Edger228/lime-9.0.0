@@ -30,7 +30,7 @@
 		<compilerflag value="-mssse3" if="linux || mac" unless="rpi || HXCPP_ARM64" />
 
 		<compilerflag value="-Wno-attributes" if="android" />
-		<compilerflag value="-Wno-tautological-constant-out-of-range-compare" if="mac || ios || tvos" unless="windows"/>
+		<compilerflag value="-Wno-tautological-constant-out-of-range-compare" if="mac || ios || tvos" unless="android"/>
 
 		<file name="${NATIVE_TOOLKIT_PATH}/pixman/pixman/pixman-access-accessors.c" />
 		<file name="${NATIVE_TOOLKIT_PATH}/pixman/pixman/pixman-access.c" />

@@ -327,12 +327,12 @@
 		<file name="src/system/CFFI.cpp" />
 		<file name="src/system/CFFIPointer.cpp" />
 		<file name="src/system/ClipboardEvent.cpp" />
-		<file name="src/system/Display.mm" if="mac || ios" unless="windows"/>
+		<file name="src/system/Display.mm" if="mac || ios" unless="android"/>
 		<file name="src/system/Display.cpp" unless="mac || ios" />
 		<file name="src/system/DisplayMode.cpp" />
 		<file name="src/system/JNI.cpp" if="android" />
 		<file name="src/system/Locale.cpp" unless="mac || ios" />
-		<file name="src/system/Locale.mm" if="mac || ios" unless="windows"/>
+		<file name="src/system/Locale.mm" if="mac || ios" unless="android"/>
 		<file name="src/system/OrientationEvent.cpp" />
 		<file name="src/system/SensorEvent.cpp" />
 		<file name="src/system/System.cpp" unless="ios" />
@@ -484,7 +484,7 @@
 
 			</section>
 
-			<section if="mac">
+			<section if="mac" unless="android">
 				<vflag name="-install_name" value="@executable_path/lime.hdll" if="LIME_HASHLINK"/>
 				<!--
 					starting in xcode 15, rpath doesn't automatically include

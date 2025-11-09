@@ -29,11 +29,10 @@
 
 #include "hb.h"
 
-#include <TargetConditionals.h>
 #if TARGET_OS_IPHONE
+#  include <TargetConditionals.h>
 #  include <CoreText/CoreText.h>
 #  include <CoreGraphics/CoreGraphics.h>
-#else
 #  include <ApplicationServices/ApplicationServices.h>
 #endif
 
