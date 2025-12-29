@@ -27,8 +27,8 @@ jobs:
           haxelib install format --quiet
           haxelib install hxp --quiet
 
-      - name: Force HXCPP clang (Android)
-        run: echo "HXCPP_CLANG=1" >> $GITHUB_ENV
+      - name: Enable HXCPP compile cache
+        run: echo "HXCPP_COMPILE_CACHE=~/.hxcpp" >> $GITHUB_ENV
 
       - name: Configure Lime
         run: |
