@@ -167,9 +167,12 @@ class AndroidPlatform extends PlatformTarget
 
 		for (architecture in architectures)
 		{
-			var minSDKVer = project.config.getInt("android.minimum-sdk-version", 21);
+			var minSDKVer = project.config.getInt("android.minimum-sdk-version", 24);
 			var haxeParams = [hxml, "-D", "android", "-D", 'HXCPP_ANDROID_PLATFORM=$minSDKVer'];
-			var cppParams = ["-Dandroid", '-DHXCPP_ANDROID_PLATFORM=$minSDKVer'];
+			var cppParams = [
+				"-Dandroid",
+				"-DHXCPP_ANDROID_PLATFORM=" + minSDKVer
+			];
 			var path = sourceSet + "/jniLibs";
 			var suffix = ".so";
 
@@ -362,34 +365,42 @@ class AndroidPlatform extends PlatformTarget
 
 	public override function rebuild():Void
 	{
+		var arm64 = (command == "rebuild" || ArrayTools.containsValue(project.architectures, Architecture.ARM64));
+		var armv7 = (command == "rebuild" || ArrayTools.containsValue(project.architectures, Architecture.ARMV7));
+		var armv5 = (ArrayTools.containsValue(project.architectures, Architecture.ARMV5) || ArrayTools.containsValue(project.architectures, Architecture.ARMV6));
+		var x64 = (ArrayTools.containsValue(project.architectures, Architecture.X64));
+		var x86 = (command == "rebuild" || ArrayTools.containsValue(project.architectures, Architecture.X86));
+
 		var commands = [];
 
-		switch (System.hostArchitecture)
+		var minSDKVer = 24;
+		var platformDefine = '-DHXCPP_ANDROID_PLATFORM=$minSDKVer';
+
+		if (project.targetFlags.exists("ONLY_ARM64"))
 		{
-			case X64:
-				if (targetFlags.exists("hl"))
-				{
-					commands.push(["-Dmac", "-DHXCPP_CLANG", "-DHXCPP_M64", "-Dhashlink"]);
-				}
-				else if (!targetFlags.exists("32"))
-				{
-					commands.push(["-Dmac", "-DHXCPP_CLANG", "-DHXCPP_M64"]);
-				}
-				else
-				{
-					commands.push(["-Dmac", "-DHXCPP_CLANG", "-DHXCPP_M32"]);
-				}
-			case X86:
-				commands.push(["-Dmac", "-DHXCPP_CLANG", "-DHXCPP_M32"]);
-			case ARM64:
-				commands.push(["-Dmac", "-DHXCPP_CLANG", "-DHXCPP_ARM64"]);
-			default:
+			arm64 = true;
+			armv7 = x86 = x64 = false;
+		}
+		else if (project.targetFlags.exists("ONLY_ARMV7"))
+		{
+			armv7 = true;
+			arm64 = x86 = x64 = false;
+		}
+		else if (project.targetFlags.exists("ONLY_X86_64"))
+		{
+			x64 = true;
+			arm64 = armv7 = x86 = false;
+		}
+		else if (project.targetFlags.exists("ONLY_X86"))
+		{
+			x86 = true;
+			arm64 = armv7 = x64 = false;
 		}
 
-		if (targetFlags.exists("hl"))
-		{
-			CPPHelper.rebuild(project, commands, null, "BuildHashlink.xml");
-		}
+		if (arm64) commands.push(["-Dandroid", "-DHXCPP_ARM64", platformDefine]);
+		if (armv7) commands.push(["-Dandroid", "-DHXCPP_ARMV7", platformDefine]);
+		if (x64) commands.push(["-Dandroid", "-DHXCPP_X86_64", platformDefine]);
+		if (x86) commands.push(["-Dandroid", "-DHXCPP_X86", platformDefine]);
 
 		CPPHelper.rebuild(project, commands);
 	}
@@ -471,7 +482,7 @@ class AndroidPlatform extends PlatformTarget
 			"android.permission.READ_EXTERNAL_STORAGE",
 			"android.permission.WRITE_EXTERNAL_STORAGE"
 		]);
-		context.ANDROID_GRADLE_VERSION = project.config.getString("android.gradle-version", "9.1.0");
+		context.ANDROID_GRADLE_VERSION = project.config.getString("android.gradle-version", "9.2.1");
 		context.ANDROID_GRADLE_PLUGIN = project.config.getString("android.gradle-plugin", "8.13.0");
 		context.ANDROID_USE_ANDROIDX = project.config.getString("android.useAndroidX", "true");
 		context.ANDROID_ENABLE_JETIFIER = project.config.getString("android.enableJetifier", "false");
@@ -502,6 +513,41 @@ class AndroidPlatform extends PlatformTarget
 		context.ANDROID_ACCEPT_FILE_INTENT = project.config.getArrayString("android.accept-file-intent", []);
 
 		context.SHARE_FILES = project.haxedefs.exists("SHARE_MOBILE_FILES");
+
+		if (!project.environment.exists("ANDROID_SDK") || !project.environment.exists("ANDROID_NDK_ROOT"))
+		{
+			var command = #if lime "lime" #else "hxp" #end;
+			var toolsBase = Type.resolveClass("CommandLineTools");
+			if (toolsBase != null) command = Reflect.field(toolsBase, "commandName");
+
+			Log.error("You must define ANDROID_SDK and ANDROID_NDK_ROOT to target Android, please run '" + command + " setup android' first");
+			Sys.exit(1);
+		}
+		else
+		{
+			var sdkPath = project.environment.get("ANDROID_SDK");
+			if (!FileSystem.exists(sdkPath))
+			{
+				Log.error("The path specified for ANDROID_SDK does not exist: " + sdkPath);
+				Sys.exit(1);
+			}
+			if (!FileSystem.isDirectory(sdkPath))
+			{
+				Log.error("The path specified for ANDROID_SDK must be a directory: " + sdkPath);
+				Sys.exit(1);
+			}
+			var ndkPath = project.environment.get("ANDROID_NDK_ROOT");
+			if (!FileSystem.exists(ndkPath))
+			{
+				Log.error("The path specified for ANDROID_NDK_ROOT does not exist: " + ndkPath);
+				Sys.exit(1);
+			}
+			if (!FileSystem.isDirectory(ndkPath))
+			{
+				Log.error("The path specified for ANDROID_NDK_ROOT must be a directory: " + ndkPath);
+				Sys.exit(1);
+			}
+		}
 
 		if (project.config.exists("android.gradle-build-directory"))
 		{
