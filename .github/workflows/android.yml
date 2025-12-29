@@ -23,18 +23,36 @@ jobs:
 
       - name: Install Haxe dependencies
         run: |
-          haxelib git hxcpp https://github.com/HomuHomu833-haxelibs/hxcpp --quiet
+          haxelib git hxcpp https://github.com/FunkinCrew/hxcpp --quiet
           haxelib install format --quiet
           haxelib install hxp --quiet
-
-      - name: Enable HXCPP compile cache
-        run: echo "HXCPP_COMPILE_CACHE=~/.hxcpp" >> $GITHUB_ENV
 
       - name: Force HXCPP clang (Android)
         run: echo "HXCPP_CLANG=1" >> $GITHUB_ENV
 
       - name: Configure Lime
         run: |
+          haxelib dev lime ${{ github.workspace }}
+          haxelib run lime config ANDROID_NDK_ROOT $ANDROID_NDK_LATEST_HOME -nocffi
+          haxelib run lime config ANDROID_SETUP true -nocffi
+
+      - name: Rebuild Lime
+        run: |
+          haxelib run lime rebuild hxcpp
+          haxelib run lime rebuild android -release -nocolor -nocffi -ONLY_ARMV7
+          haxelib run lime rebuild android -release -nocolor -nocffi -ONLY_ARM64
+          haxelib run lime rebuild android -release -nocolor -nocffi -ONLY_X86
+          haxelib run lime rebuild android -release -nocolor -nocffi -ONLY_X86_64
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-NDLL
+          path: |
+            ndll/Android/
+            !**/.gitignore
+            lime.png
+          if-no-files-found: error        run: |
           haxelib dev lime ${{ github.workspace }}
           haxelib run lime config ANDROID_NDK_ROOT $ANDROID_NDK_LATEST_HOME -nocffi
           haxelib run lime config ANDROID_SETUP true -nocffi
