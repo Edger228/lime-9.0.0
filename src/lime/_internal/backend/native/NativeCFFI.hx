@@ -107,6 +107,16 @@ class NativeCFFI
 
 	@:cffi private static function lime_file_dialog_save_file(title:String, filter:String, defaultPath:String):Dynamic;
 
+	@:cffi private static function lime_file_dialog_manager_register_ios(callback:Dynamic, eventObject:Dynamic):Void;
+
+	@:cffi private static function lime_file_dialog_create_ios():Int;
+
+	@:cffi private static function lime_file_dialog_open_ios(id:Int):Void
+
+	@:cffi private static function lime_file_dialog_browse_select_ios(id:Int):Void
+
+	@:cffi private static function lime_file_dialog_browse_select_multiple_ios(id:Int):Void
+
 	@:cffi private static function lime_file_watcher_create(callback:Dynamic):CFFIPointer;
 
 	@:cffi private static function lime_file_watcher_add_directory(handle:CFFIPointer, path:Dynamic, recursive:Bool):Dynamic;
@@ -423,6 +433,16 @@ class NativeCFFI
 		"lime_file_dialog_open_files", "ssso", false));
 	private static var lime_file_dialog_save_file = new cpp.Callable<String->String->String->cpp.Object>(cpp.Prime._loadPrime("lime",
 		"lime_file_dialog_save_file", "ssso", false));
+	private static var lime_file_dialog_manager_register_ios = new cpp.Callable<cpp.Object->cpp.Object->cpp.Void>(cpp.Prime._loadPrime("lime",
+		"lime_file_dialog_manager_register_ios", "oov", false));
+	private static var lime_file_dialog_create_ios = new cpp.Callable<Void->Int>(cpp.Prime._loadPrime("lime",
+		"lime_file_dialog_create_ios", "i", false));
+	private static var lime_file_dialog_open_ios = new cpp.Callable<Int->cpp.Void>(cpp.Prime._loadPrime("lime",
+		"lime_file_dialog_open_ios", "iv", false));
+	private static var lime_file_dialog_browse_select_ios = new cpp.Callable<Int->cpp.Void>(cpp.Prime._loadPrime("lime",
+		"lime_file_dialog_browse_select_ios", "iv", false));
+	private static var lime_file_dialog_browse_select_multiple_ios = new cpp.Callable<Int->cpp.Void>(cpp.Prime._loadPrime("lime",
+		"lime_file_dialog_browse_select_multiple_ios", "iv", false));
 	private static var lime_file_watcher_create = new cpp.Callable<cpp.Object->cpp.Object>(cpp.Prime._loadPrime("lime", "lime_file_watcher_create", "oo",
 		false));
 	private static var lime_file_watcher_add_directory = new cpp.Callable<cpp.Object->cpp.Object->Bool->cpp.Object>(cpp.Prime._loadPrime("lime",
@@ -684,6 +704,11 @@ class NativeCFFI
 	private static var lime_file_dialog_open_file = CFFI.load("lime", "lime_file_dialog_open_file", 3);
 	private static var lime_file_dialog_open_files = CFFI.load("lime", "lime_file_dialog_open_files", 3);
 	private static var lime_file_dialog_save_file = CFFI.load("lime", "lime_file_dialog_save_file", 3);
+	private static var lime_file_dialog_manager_register_ios = CFFI.load("lime", "lime_file_dialog_manager_register_ios", 2);
+	private static var lime_file_dialog_create_ios = CFFI.load("lime", "lime_file_dialog_create_ios", 0);
+	private static var lime_file_dialog_open_ios = CFFI.load("lime", "lime_file_dialog_open_ios", 1);
+	private static var lime_file_dialog_browse_select_ios = CFFI.load("lime", "lime_file_dialog_browse_select_ios", 1);
+	private static var lime_file_dialog_browse_select_multiple_ios = CFFI.load("lime", "lime_file_dialog_browse_select_multiple_ios", 1);
 	private static var lime_file_watcher_create = CFFI.load("lime", "lime_file_watcher_create", 1);
 	private static var lime_file_watcher_add_directory = CFFI.load("lime", "lime_file_watcher_add_directory", 3);
 	private static var lime_file_watcher_remove_directory = CFFI.load("lime", "lime_file_watcher_remove_directory", 2);
@@ -3731,6 +3756,8 @@ class NativeCFFI
 
 	@:cffi private static function lime_gl_blend_func_separate(srcRGB:Int, dstRGB:Int, srcAlpha:Int, dstAlpha:Int):Void;
 
+	@:cffi private static function lime_gl_blend_barrier():Void;
+
 	@:cffi private static function lime_gl_blit_framebuffer(srcX0:Int, srcY0:Int, srcX1:Int, srcY1:Int, dstX0:Int, dstY0:Int, dstX1:Int, dstY1:Int, mask:Int,
 		filter:Int):Void;
 
@@ -4270,6 +4297,7 @@ class NativeCFFI
 	private static var lime_gl_blend_func = new cpp.Callable<Int->Int->cpp.Void>(cpp.Prime._loadPrime("lime", "lime_gl_blend_func", "iiv", false));
 	private static var lime_gl_blend_func_separate = new cpp.Callable<Int->Int->Int->Int->cpp.Void>(cpp.Prime._loadPrime("lime",
 		"lime_gl_blend_func_separate", "iiiiv", false));
+	private static var lime_gl_blend_barrier = new cpp.Callable<Void->cpp.Void>(cpp.Prime._loadPrime("lime", "lime_gl_blend_barrier", "v", false));
 	private static var lime_gl_blit_framebuffer = new cpp.Callable<Int->Int->Int->Int->Int->Int->Int->Int->Int->Int->cpp.Void>(cpp.Prime._loadPrime("lime",
 		"lime_gl_blit_framebuffer", "iiiiiiiiiiv", false));
 	private static var lime_gl_buffer_data = new cpp.Callable<Int->Int->lime.utils.DataPointer->Int->cpp.Void>(cpp.Prime._loadPrime("lime",
@@ -4704,6 +4732,7 @@ class NativeCFFI
 	private static var lime_gl_blend_equation_separate = CFFI.load("lime", "lime_gl_blend_equation_separate", 2);
 	private static var lime_gl_blend_func = CFFI.load("lime", "lime_gl_blend_func", 2);
 	private static var lime_gl_blend_func_separate = CFFI.load("lime", "lime_gl_blend_func_separate", 4);
+	private static var lime_gl_blend_barrier = CFFI.load("lime", "lime_gl_blend_barrier", 0);
 	private static var lime_gl_blit_framebuffer = CFFI.load("lime", "lime_gl_blit_framebuffer", -1);
 	private static var lime_gl_buffer_data = CFFI.load("lime", "lime_gl_buffer_data", 4);
 	private static var lime_gl_buffer_sub_data = CFFI.load("lime", "lime_gl_buffer_sub_data", 4);
@@ -4996,6 +5025,8 @@ class NativeCFFI
 
 	@:hlNative("lime", "hl_gl_blend_func_separate") private static function lime_gl_blend_func_separate(srcRGB:Int, dstRGB:Int, srcAlpha:Int,
 		dstAlpha:Int):Void {}
+
+	@:hlNative("lime", "hl_gl_blend_barrier") private static function lime_gl_blend_barrier():Void {}
 
 	@:hlNative("lime", "hl_gl_blit_framebuffer") private static function lime_gl_blit_framebuffer(srcX0:Int, srcY0:Int, srcX1:Int, srcY1:Int, dstX0:Int,
 		dstY0:Int, dstX1:Int, dstY1:Int, mask:Int, filter:Int):Void {}

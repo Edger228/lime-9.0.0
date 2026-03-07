@@ -9,7 +9,6 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 ::if (ANDROID_USE_ANDROIDX)::
 import androidx.core.content.FileProvider;
-import ::APP_PACKAGE::.BuildConfig;
 ::end::
 import android.net.Uri;
 import android.os.Build;
@@ -544,7 +543,7 @@ public class GameActivity extends SDLActivity {
 			Uri uri;
 			::if (ANDROID_USE_ANDROIDX)::
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) { // Android 7.0+
-    			uri = FileProvider.getUriForFile(Extension.mainActivity, BuildConfig.APPLICATION_ID + ".fileprovider", file);
+    			uri = FileProvider.getUriForFile(Extension.mainActivity, Extension.mainActivity.getPackageName() + ".fileprovider", file);
 			} else { // Android 5.0 - 6.0
     			uri = Uri.fromFile(file);
 			}
